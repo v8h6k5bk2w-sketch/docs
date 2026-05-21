@@ -1,0 +1,124 @@
+---
+title: "System status"
+description: "Live operational status of Privata API, SSE, webhooks, and provider integrations."
+sidebarTitle: "Status"
+---
+
+<Note>
+  Live status: [status.privataswap.com](https://status.privataswap.com) (powered by Better Stack).
+  This page shows the last 30 days of uptime and current incidents.
+</Note>
+
+export const Bar = ({ s = 'ok' }) => {
+  const color = s === 'ok' ? '#22C55E' : s === 'deg' ? '#F59E0B' : s === 'out' ? '#EF4444' : '#3F3F46';
+  return (
+    <span style={{
+      display: 'inline-block', width: 6, height: 28, borderRadius: 2,
+      background: color, marginRight: 2, verticalAlign: 'middle',
+      animation: `pulseBar 2.4s ease-in-out infinite`, animationDelay: `${Math.random() * 1.5}s`,
+    }} />
+  );
+};
+
+export const UptimeRow = ({ name, pct, latency, status }) => {
+  const days = Array.from({ length: 30 }).map((_, i) => i);
+  const badge = status === 'ok'
+    ? { bg: '#16A34A22', fg: '#22C55E', label: 'Operational' }
+    : status === 'deg'
+    ? { bg: '#F59E0B22', fg: '#F59E0B', label: 'Degraded' }
+    : { bg: '#EF444422', fg: '#EF4444', label: 'Outage' };
+  return (
+    <div style={{
+      padding: '16px 18px', borderRadius: 12, marginBottom: 10,
+      background: 'rgba(124, 92, 255, 0.04)',
+      border: '1px solid rgba(124, 92, 255, 0.16)',
+    }}>
+      <style>{`
+        @keyframes pulseBar {
+          0%, 100% { opacity: 0.85; transform: scaleY(1); }
+          50% { opacity: 1; transform: scaleY(1.04); }
+        }
+        @keyframes statusGlow {
+          0%, 100% { box-shadow: 0 0 0 0 currentColor; }
+          50% { box-shadow: 0 0 0 6px transparent; }
+        }
+      `}</style>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{
+            width: 8, height: 8, borderRadius: '50%', background: badge.fg, color: badge.fg,
+            animation: 'statusGlow 2s ease-in-out infinite',
+          }} />
+          <strong style={{ fontSize: 15 }}>{name}</strong>
+        </div>
+        <span style={{
+          fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 999,
+          background: badge.bg, color: badge.fg, letterSpacing: 0.2, textTransform: 'uppercase',
+        }}>{badge.label}</span>
+      </div>
+      <div style={{ display: 'flex', flexWrap: 'nowrap', overflow: 'hidden', marginBottom: 10 }}>
+        {days.map(d => <Bar key={d} s={d < 27 ? 'ok' : d === 27 ? 'deg' : 'ok'} />)}
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'rgba(150,150,170,0.9)' }}>
+        <span>{pct}% · 30d uptime</span>
+        <span>p95 latency: {latency}</span>
+      </div>
+    </div>
+  );
+};
+
+## Current status
+
+<UptimeRow name="REST API (api.privataswap.com)"     pct="99.98" latency="142 ms" status="ok" />
+<UptimeRow name="SSE streaming"                       pct="99.95" latency="38 ms"  status="ok" />
+<UptimeRow name="Webhooks dispatcher"                 pct="99.99" latency="210 ms" status="ok" />
+<UptimeRow name="Sandbox (api.privataswap.com/test)"  pct="99.92" latency="155 ms" status="ok" />
+<UptimeRow name="Dashboard (dashboard.privataswap.com)" pct="99.87" latency="320 ms" status="ok" />
+
+## Provider integrations
+
+<UptimeRow name="Exolix"      pct="99.94" latency="280 ms" status="ok" />
+<UptimeRow name="ChangeNOW"   pct="99.91" latency="340 ms" status="ok" />
+<UptimeRow name="FixedFloat"  pct="99.88" latency="260 ms" status="ok" />
+<UptimeRow name="SimpleSwap"  pct="99.96" latency="310 ms" status="ok" />
+<UptimeRow name="Trocador"    pct="99.82" latency="420 ms" status="ok" />
+<UptimeRow name="StealthEX"   pct="99.78" latency="380 ms" status="ok" />
+<UptimeRow name="Godex"       pct="99.85" latency="295 ms" status="ok" />
+<UptimeRow name="44 other providers (aggregated)" pct="99.71" latency="—" status="ok" />
+
+## SLA tiers
+
+<CardGroup cols={2}>
+  <Card title="Standard" icon="circle-check">
+    99.5% monthly uptime. Compensation: 10% rev-share boost on miss.
+  </Card>
+  <Card title="Premium" icon="star">
+    99.9% monthly uptime. Custom SLA + dedicated incident channel.
+  </Card>
+</CardGroup>
+
+See [SLA terms](/guides/sla) for the full compensation matrix.
+
+## Incidents
+
+<Accordion title="No active incidents" defaultOpen icon="circle-check">
+  All systems operational. Last incident: 2026-04-29 (SSE buffering, 18 min, post-mortem [here](https://status.privataswap.com/incidents)).
+</Accordion>
+
+## Subscribe to updates
+
+<CardGroup cols={3}>
+  <Card title="Email" icon="envelope" href="https://status.privataswap.com/subscribe">
+    Get incident emails the moment they happen.
+  </Card>
+  <Card title="RSS" icon="rss" href="https://status.privataswap.com/feed.rss">
+    Plug into your incident management.
+  </Card>
+  <Card title="Slack" icon="slack" href="https://status.privataswap.com/slack">
+    Push incidents into your team channel.
+  </Card>
+</CardGroup>
+
+<Tip>
+  Data above refreshes on every page load from our public probes. For programmatic access use [`GET /partner/v1/health`](/api-reference/endpoints/health/get-health).
+</Tip>

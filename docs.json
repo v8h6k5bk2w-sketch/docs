@@ -61,6 +61,7 @@
               "guides/errors",
               "guides/sla",
               "guides/ops-events",
+              "status",
               "guides/changelog"
             ]
           }
