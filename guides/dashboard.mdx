@@ -1,0 +1,428 @@
+---
+title: "Partner Dashboard"
+description: "Self-service control plane for API keys, webhooks, orders, revenue, and team management at dashboard.privataswap.com."
+---
+
+The Privata Partner Dashboard (`dashboard.privataswap.com`) is the control plane for your integration. Use it to issue API keys, configure webhooks, monitor live orders, track earnings, and manage your team — all without contacting Privata support for routine operations.
+
+<CardGroup cols={2}>
+  <Card title="Sign up and complete onboarding" icon="user-plus" href="#1-sign-up-and-complete-onboarding">
+    Register, verify your email, and finish the KYB-lite onboarding to receive your first API keys.
+  </Card>
+  <Card title="Create API keys" icon="key" href="#2-create-and-manage-api-keys">
+    Issue scoped live and test keys, configure IP allowlists, and rotate without downtime.
+  </Card>
+  <Card title="Configure webhooks" icon="webhook" href="#3-configure-webhooks">
+    Register your HTTPS endpoint, rotate secrets, and inspect delivery logs.
+  </Card>
+  <Card title="Monitor orders" icon="list-check" href="#4-monitor-orders">
+    Search, filter, inspect event timelines, and trigger refund actions.
+  </Card>
+  <Card title="Set up alerts" icon="bell" href="#5-set-up-alerts-and-notifications">
+    Configure email and in-app notifications for operational events.
+  </Card>
+  <Card title="Manage payouts" icon="wallet" href="#6-manage-payouts">
+    Add verified payout addresses and request revenue withdrawals.
+  </Card>
+</CardGroup>
+
+---
+
+## 1. Sign up and complete onboarding
+
+<Steps>
+  <Step title="Create an account">
+    Go to [dashboard.privataswap.com/signup](https://dashboard.privataswap.com/signup). Enter your business email and choose a password (minimum 12 characters), or request a magic-link to your email instead.
+
+    A 6-digit verification code is sent to your email. Enter it to confirm your address. The code is valid for 10 minutes.
+  </Step>
+  <Step title="Complete KYB-lite">
+    Before your live API key is issued, you must complete a four-step onboarding form:
+
+    1. **Company** — Legal name, registered country, business type, website.
+    2. **Volume** — Expected monthly order count and primary integration method.
+    3. **Jurisdictions** — Countries where your end-users are located, plus AML compliance acknowledgement.
+    4. **Technical contact** — Name, email, and optional Telegram handle for ops notifications.
+
+    <Warning>
+      The dashboard cannot issue a live key until onboarding is complete. If your intended jurisdictions include FATF high-risk countries, the flow will redirect you to contact Privata directly.
+    </Warning>
+  </Step>
+  <Step title="Receive your test key">
+    After completing onboarding, a `pk_test_...` key is displayed **once**. Copy it immediately — it will not be shown again. Your live key is issued from **API Keys → Create key** once your account is reviewed.
+
+    Use the test key with sandbox scenarios to validate your integration before going live:
+
+    ```http
+    GET /partner/v1/estimate?from=BTC&to=XMR&amount=0.05
+    X-API-Key: pk_test_...
+    ```
+
+    See the [Sandbox guide](/guides/sandbox) for available test scenarios.
+  </Step>
+  <Step title="Enable two-factor authentication">
+    Navigate to **Settings → Security** and enroll TOTP (Google Authenticator, Authy, 1Password) or a FIDO2/WebAuthn passkey. 2FA is strongly recommended; it is required before a live key can be issued to an account with `payouts:trigger` scope.
+  </Step>
+</Steps>
+
+---
+
+## 2. Create and manage API keys
+
+### Key types
+
+| Prefix | Environment | Counts toward payouts |
+|---|---|---|
+| `pk_test_...` | Sandbox | No |
+| `pk_live_...` | Production | Yes |
+
+Read endpoints (`/currencies`, `/pairs`, `/estimate`, `/limits`) work without a key at 60 req/min per IP. With a key: 600 req/min. Write endpoints require a key. See [Authentication](/guides/authentication) for full scope and rate-limit details.
+
+### Creating a key
+
+<Steps>
+  <Step title="Open API Keys">
+    Navigate to **API Keys → Create key**.
+  </Step>
+  <Step title="Configure the key">
+    - **Name** — Internal label (e.g., "Production mobile app").
+    - **Environment** — Live or Test.
+    - **Scopes** — Select only the scopes your integration requires:
+
+    | Scope | What it allows |
+    |---|---|
+    | `orders:rw` | All `/order/*` endpoints (default) |
+    | `webhook:admin` | Resume a paused webhook; configure webhook URLs |
+    | `payouts:read` | `/me` and payout history |
+    | `payouts:trigger` | On-demand payout request (minimum $500) |
+
+    - **IP allowlist** — Optional. Enter CIDR blocks to restrict the key to specific server IPs (e.g., `203.0.113.0/24`). Leave empty to allow all IPs.
+    - **Expiry** — Optional. The key auto-revokes at midnight UTC on the selected date.
+  </Step>
+  <Step title="Copy the key">
+    The full key value is displayed **once**. Copy it to your secrets manager before closing the modal. Click **"I have copied this key"** to confirm.
+
+    <Warning>
+      Never commit API keys to source control. Use environment variables or a secrets manager (AWS Secrets Manager, HashiCorp Vault, Doppler). The JS SDK enforces a runtime warning when a live key is detected in a browser bundle.
+    </Warning>
+  </Step>
+</Steps>
+
+### Rotating a key without downtime
+
+Key rotation uses a 5-minute dual-sign grace window: both the old and new key are accepted by the API during this period.
+
+<Steps>
+  <Step title="Start rotation">
+    On the key's detail page, click **Rotate**. A new key is generated and displayed once — copy it immediately.
+  </Step>
+  <Step title="Deploy the new key">
+    Update your environment variable or secrets manager with the new key value and deploy. You have 5 minutes before the old key is revoked.
+  </Step>
+  <Step title="Grace window expires">
+    After 5 minutes, the old key is automatically revoked. A countdown timer in the dashboard shows the remaining window. If you need more time, click **Cancel rotation** (available until the window closes).
+  </Step>
+</Steps>
+
+<Tip>
+  If you rotate your webhook secret at the same time as your API key, both dual-sign windows run concurrently. See [Webhooks → Secret rotation](#rotating-the-webhook-secret) below.
+</Tip>
+
+---
+
+## 3. Configure webhooks
+
+Privata sends signed HTTP POST requests to your registered endpoint on every order status change and on operational events. See the [Webhooks guide](/guides/webhooks) for full signature verification, retry schedule, and event payload documentation.
+
+### Adding an endpoint
+
+<Steps>
+  <Step title="Open Webhooks">
+    Navigate to **Webhooks → Add endpoint**.
+  </Step>
+  <Step title="Enter the URL">
+    Provide your HTTPS endpoint URL. Requirements:
+    - Must use HTTPS (HTTP only permitted for `localhost` with a `pk_test_` key).
+    - Must be publicly reachable (private IP ranges are blocked as an SSRF guard).
+    - Must return a 2xx response within 5 seconds per delivery.
+  </Step>
+  <Step title="Select endpoint type">
+    - **Order events** — Receives `order.*` lifecycle events (status changes, refund_required, etc.).
+    - **Ops events** — Receives `webhook_paused`, `api_key_locked`, `sla_breach_threshold`, and similar operational alerts.
+
+    <Tip>
+      You can point the Ops URL at a Slack incoming webhook — Privata detects `hooks.slack.com` and formats the payload as a Slack Block Kit message automatically.
+    </Tip>
+  </Step>
+  <Step title="Copy the webhook secret">
+    A secret (`whsec_...`) is generated and displayed **once**. Store it in your secrets manager. Use it to verify the `X-Privata-Signature` header on every incoming request:
+
+    ```ts
+    import { verifyWebhook } from "@privata/wallet-api/webhooks";
+
+    app.post("/webhooks/privata", express.raw({ type: "*/*" }), (req, res) => {
+      const ok = verifyWebhook(
+        req.body,
+        req.header("x-privata-signature"),
+        process.env.WHSEC!
+      );
+      if (!ok) return res.status(401).end();
+      // Deduplicate on x-privata-event-id before processing.
+      res.status(200).end();
+    });
+    ```
+
+    Always use the **raw body** for verification. Parsing JSON before verification will fail.
+  </Step>
+</Steps>
+
+### Rotating the webhook secret
+
+Navigate to **Webhooks → [endpoint] → Secret → Rotate**. A 5-minute dual-sign window activates: both old and new secrets are valid. Deploy your updated secret value within this window.
+
+### Inspecting delivery logs
+
+Navigate to **Webhooks → [endpoint] → Deliveries** to view all delivery attempts with HTTP status codes, response bodies, and retry timestamps.
+
+From a delivery detail page you can:
+
+- **Retry** — Re-enqueue the delivery for immediate re-attempt (new delivery record, new signature).
+- **Replay** — Re-send the exact original payload with the current secret (use this to re-trigger processing of a specific event).
+
+<Warning>
+  Replay re-delivers the original `event_id`. Ensure your endpoint handles duplicate `event_id` values idempotently to avoid double-processing.
+</Warning>
+
+### Resuming a paused endpoint
+
+After 50 delivery failures within 6 hours, your endpoint is auto-paused. You receive a `webhook_paused` ops event. To resume:
+
+**Option 1 — Dashboard:** Navigate to **Webhooks** and click **Resume** on the paused endpoint.
+
+**Option 2 — API:** Call `POST /partner/v1/webhook/resume` with an API key that has `webhook:admin` scope:
+
+```http
+POST https://api.privataswap.com/partner/v1/webhook/resume
+X-API-Key: pk_live_... (webhook:admin scope required)
+```
+
+Events queued during the pause are not dropped — they replay on resume in order.
+
+---
+
+## 4. Monitor orders
+
+### Searching orders
+
+Navigate to **Orders** to access the order table. Available filters:
+
+| Filter | Type |
+|---|---|
+| Order ID | Exact (`prv-...` prefix) |
+| Partner order ref | Exact (your internal ID) |
+| Status | Multi-select |
+| Trading pair | Token picker |
+| Provider | Multi-select |
+| Date range | Date picker |
+| Amount (USD) | Numeric range |
+
+Export up to 10,000 rows as CSV from the filter bar. Larger exports are processed asynchronously and delivered by email.
+
+### Order detail
+
+Click any order to open its detail page.
+
+<Tabs>
+  <Tab title="Summary">
+    Displays pair, provider, markup applied (bps), current status badge, and all amounts:
+    - `amount_from` — What the user sent.
+    - `amount_to_expected` — Rate at order creation.
+    - `amount_to_actual` — Final delivered amount (available on `completed` orders). If actual differs from expected by more than 0.5%, a slippage delta is shown.
+  </Tab>
+  <Tab title="Event timeline">
+    Vertical list of every status transition with timestamps and duration between states:
+
+    ```
+    waiting_deposit  →  confirming  →  exchanging  →  sending  →  completed
+    ```
+
+    Possible terminal states: `completed`, `failed`, `expired`, `refunded`. `manual_review` indicates the order requires Privata back-office intervention.
+
+    See [Order lifecycle](/guides/order-lifecycle) for a full description of each status.
+  </Tab>
+  <Tab title="Transactions">
+    - **Deposit tx hash** (`tx_in_hash`) — The transaction the user sent to the deposit address. Block explorer link auto-detected by asset type.
+    - **Payout tx hash** (`tx_out_hash`) — The transaction Privata sent to the payout address.
+  </Tab>
+  <Tab title="Webhook deliveries">
+    Inline table of all webhook deliveries for this order: event type, attempt number, HTTP status, and timestamp. Click through to full delivery detail.
+  </Tab>
+</Tabs>
+
+### Triggering a refund action
+
+When an order reaches `refund_required` status and the provider supports programmatic refunds (`refund_capability: programmatic`), a **Refund action** panel appears on the order detail page.
+
+<Steps>
+  <Step title="Check the window">
+    A countdown timer shows the remaining `refund_window_hours`. After this window, the order auto-applies your `refund_preference.default` (set at order creation).
+  </Step>
+  <Step title="Choose an action">
+    - **Refund to address** — Returns funds to the `refund_address` provided at order creation.
+    - **Convert to stable** — Converts funds to a stablecoin before returning. Select target: `USDT-TRC20`, `USDT-ERC20`, `USDC-ERC20`, or `USDC-SOL`.
+  </Step>
+  <Step title="Confirm">
+    A confirmation dialog summarizes the action. Click **Confirm** to submit. The dashboard calls `POST /partner/v1/order/{id}/refund-action` on your behalf.
+  </Step>
+</Steps>
+
+See [Refund flow](/guides/refund-flow) for full programmatic refund documentation.
+
+---
+
+## 5. Set up alerts and notifications
+
+### Email notifications
+
+The technical contact email (set during onboarding) receives email alerts for operational events. Navigate to **Settings → Organization** to update this address.
+
+| Event | Recipients | Can opt out |
+|---|---|---|
+| Webhook endpoint paused | Technical contact | No |
+| SLA breach detected | Technical contact + Owners | No |
+| API key expiring in 7 days | Key creator + Admins | No |
+| API key expiring in 24 hours | Key creator + Admins | No |
+| Payout sent | Finance + Owner | Yes |
+| New login from unrecognized device | The affected user | No |
+
+### In-app notifications
+
+The dashboard displays banners and toasts for the following conditions:
+
+- **Webhook paused** — Banner on the Webhooks page with a direct Resume button.
+- **SLA breach** — Persistent banner on all pages linking to the SLA details page.
+- **API key expiry approaching** — Banner on the API Keys page for keys expiring within 7 days.
+- **Payout confirmed** — Toast notification when a payout transaction is sent.
+
+### Monitoring your SLA
+
+Navigate to **SLA** to view:
+
+- **Live uptime percentage** for the current calendar month, measured by your registered external prober against `GET /partner/v1/health`.
+- **Compensation accrual** — If uptime falls below your tier's target, the accrued SLA credit for the month is displayed and applied automatically to your next payout.
+- **Incident log** — All historical incidents with duration and RCA links.
+
+Your uptime tier depends on your contract phase:
+
+| Phase | Target |
+|---|---|
+| Pilot (day 0–30) | 99.5% with tiered compensation |
+| Post-pilot (day 31+) | 99.9% contractual |
+| Enterprise tier | 99.9% from day 1 |
+
+See the [SLA guide](/guides/sla) for compensation tables and the probe contract.
+
+<Tip>
+  Subscribe to [status.privataswap.com](https://status.privataswap.com) via RSS, email, or Slack to receive incident notifications independently of the dashboard.
+</Tip>
+
+---
+
+## 6. Manage payouts
+
+Revenue earned through rev-share and markup is visible in the **Revenue** section. Payouts are processed to your registered and verified cryptocurrency address.
+
+### Adding a payout address
+
+<Steps>
+  <Step title="Open Revenue → Payout Addresses">
+    Navigate to **Revenue → Payout Addresses → Add address**.
+  </Step>
+  <Step title="Enter address and currency">
+    Select the target currency (`USDT-TRC20`, `USDT-ERC20`, `USDC-ERC20`, or `USDC-SOL`) and enter the address. The dashboard validates the address format and checksum before saving.
+  </Step>
+  <Step title="Verify ownership">
+    A micro-payment of 0.01 USDT is sent to the address. Confirm receipt in the dashboard within 24 hours. Unverified addresses cannot receive payouts.
+  </Step>
+  <Step title="Set as default">
+    Once verified, you can set the address as the default for that currency. All payout requests default to this address unless you select another.
+  </Step>
+</Steps>
+
+### Requesting a payout
+
+Minimum payout: $500 (configurable by agreement). Maximum single request: $50,000.
+
+<Steps>
+  <Step title="Open Revenue → Request Payout">
+    Navigate to **Revenue → Request Payout**. The current pending balance is displayed.
+  </Step>
+  <Step title="Enter amount and select address">
+    Enter the amount or click **Request full balance**. Select a verified payout address.
+  </Step>
+  <Step title="Complete HMAC confirmation">
+    To prevent unauthorized withdrawals, the dashboard requires you to prove control of your webhook secret:
+
+    1. The dashboard displays a one-time challenge string.
+    2. Compute `HMAC-SHA256(your_webhook_secret, challenge_string)` and paste the result.
+    3. Click **Confirm**.
+
+    If you do not have access to the webhook secret, select **Confirm via email** instead — a 6-digit OTP is sent to your account email (valid 10 minutes).
+
+    <Warning>
+      This step is not a formality. It verifies that the payout requestor controls the integration credentials, not just the dashboard session. If this check fails, the request is rejected and logged.
+    </Warning>
+  </Step>
+  <Step title="Track payout status">
+    The payout appears in **Revenue → Payout History** with status `pending → processing → sent → confirmed`. You receive an email notification when the transaction is sent, including the blockchain tx hash.
+  </Step>
+</Steps>
+
+---
+
+## Team management
+
+Navigate to **Team** to invite members and assign roles.
+
+| Role | Typical user | Key permissions |
+|---|---|---|
+| **Owner** | Company account owner | Full access, billing, delete org |
+| **Admin** | Technical lead | All except billing and payout initiation |
+| **Developer** | Backend engineer | API keys, webhooks, orders, SSE |
+| **Finance** | Finance team member | Revenue view, payout addresses, payout requests, order read |
+| **Read-only** | Auditor, external reviewer | View orders, webhook logs, SLA |
+
+Invite a new member at **Team → Invite**. Select their role and enter their email — they receive an invitation link valid for 7 days.
+
+For enterprise organizations with 10+ members, enterprise SSO (SAML 2.0 / OIDC) can be configured at **Team → SSO** using the WorkOS connection wizard. Contact [partners@privataswap.com](mailto:partners@privataswap.com) to enable.
+
+---
+
+## Audit log
+
+Every action taken in the dashboard — key creation, role changes, payout requests, webhook replays — is recorded in the **Audit Log** with the actor's identity, IP address, and timestamp. Logs are tamper-evident (hash-chained) and retained for 2 years. Export as NDJSON or CSV for compliance reporting.
+
+---
+
+## Related guides
+
+<CardGroup cols={3}>
+  <Card title="Authentication" href="/guides/authentication">
+    API key scopes, prefixes, rotation, and lockout behavior.
+  </Card>
+  <Card title="Webhooks" href="/guides/webhooks">
+    Signature verification, retry schedule, ops events, and sandbox behavior.
+  </Card>
+  <Card title="Order lifecycle" href="/guides/order-lifecycle">
+    All order statuses, transitions, and terminal states.
+  </Card>
+  <Card title="Refund flow" href="/guides/refund-flow">
+    Programmatic vs. ticket refunds, window handling, stable conversion.
+  </Card>
+  <Card title="SSE streaming" href="/guides/sse-streaming">
+    Real-time order status via Server-Sent Events and reconnection with Last-Event-ID.
+  </Card>
+  <Card title="SLA" href="/guides/sla">
+    Uptime tiers, compensation tables, probe contract.
+  </Card>
+</CardGroup>

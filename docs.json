@@ -51,7 +51,8 @@
               "guides/refund-flow",
               "guides/sse-streaming",
               "guides/webhooks",
-              "guides/sandbox"
+              "guides/sandbox",
+              "guides/dashboard"
             ]
           },
           {
