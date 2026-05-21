@@ -1,0 +1,54 @@
+---
+title: "Authentication"
+description: "API keys, scopes, prefixes and rate tiers."
+---
+
+## Header
+
+```http
+X-API-Key: pk_live_abc123...
+```
+
+## Key types
+
+| Prefix | Environment | Counts toward payouts | Rate limit (write) |
+|---|---|---|---|
+| `pk_test_` | Sandbox | No (sandbox=1 flag) | 60 req/min |
+| `pk_live_` | Production | Yes | 60 req/min, soft cap by tier |
+
+Read endpoints (`/currencies`, `/pairs`, `/estimate`, `/limits`,
+`/providers/refund-capability`) work without a key at **60 req/min per IP**.
+With a key — **600 req/min per partner**.
+
+## Scopes
+
+A key can be issued with one or more scopes. Default key carries `orders:rw`.
+
+| Scope | Allows |
+|---|---|
+| `orders:rw` | All `/order/*` endpoints |
+| `webhook:admin` | `POST /webhook/resume`, dashboard webhook config |
+| `payouts:read` | `/me`, payout history |
+| `payouts:trigger` | On-demand payout request (min $5K) |
+
+Request additional scopes from the dashboard or via `partners@privataswap.com`.
+
+## Rotation
+
+Rotate a key by creating a new one in the dashboard and revoking the old one
+within the **5-minute dual-sign grace window**. During the window both keys
+work — and so do webhook signatures from both old and new secret if you're
+rotating the webhook secret in parallel.
+
+## Lockout
+
+Five `INVALID_KEY` responses in 60 seconds from the same IP triggers a 15-minute
+lockout for that IP. Subscribe to the `api_key_locked` ops event to know when it
+happens.
+
+## Sandbox isolation
+
+Sandbox orders are stored with `sandbox=1` in our DB. They never appear in
+production payout calculations, never hit live providers, and never produce
+real network transactions. Use `?sandbox_scenario=success|fail|refund|stuck|expire`
+on order creation to deterministically drive the lifecycle.

@@ -1,0 +1,38 @@
+---
+title: "Trocador-compatible layer"
+description: "Status: planned for v1.3 (2026 Q3)."
+---
+
+<Note>
+Not yet shipped. Native `/partner/v1` and the ChangeNOW layer cover most use cases today.
+</Note>
+
+## What's coming
+
+A second compatibility shim at `https://api.privataswap.com/trocador/*` that
+mirrors Trocador's public API for wallets and aggregators currently integrated
+with Trocador.
+
+## Why
+
+Trocador's API is the second most-integrated swap aggregator API in the
+privacy-wallet space (after ChangeNOW). Shipping this shim removes the
+last integration cost for wallets considering a switch.
+
+## Target endpoints
+
+- `GET /trocador/new_rate` — best quote
+- `POST /trocador/new_order` — create order
+- `GET /trocador/trade?id=` — order status
+- `GET /trocador/coins` — supported coins
+
+## Roadmap
+
+| Milestone | ETA |
+|---|---|
+| Read endpoints only | 2026-08 |
+| Full order create + status | 2026-09 |
+| Refund parity | 2026-10 |
+
+Email `partners@privataswap.com` if Trocador parity blocks a partnership —
+we'll prioritise.

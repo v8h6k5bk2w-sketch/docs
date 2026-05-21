@@ -1,0 +1,73 @@
+---
+title: "Errors"
+description: "All error codes with cause and recommended action."
+---
+
+## Format
+
+```json
+{
+  "error": {
+    "code": "INVALID_PAIR",
+    "message": "Pair BTC->FAKE not supported",
+    "request_id": "req_abc123..."
+  }
+}
+```
+
+Always include `request_id` when contacting support — it lets us pull the full
+trace in &lt;10 s.
+
+## Codes
+
+| Code | HTTP | Meaning | What to do |
+|---|---|---|---|
+| `INVALID_KEY` | 401 | API key missing, malformed, or revoked. | Check `X-API-Key` header and key state in dashboard. |
+| `RATE_LIMITED` | 429 | Bucket exhausted. | Respect `Retry-After`. SDK does this automatically. |
+| `INVALID_PAIR` | 400 | Pair not supported across any provider. | Show generic "Pair unavailable" UX. |
+| `AMOUNT_TOO_LOW` | 400 | Below provider minimum. | Show min from `/limits`. |
+| `AMOUNT_TOO_HIGH` | 400 | Above provider maximum. | Show max from `/limits`. |
+| `NO_PROVIDERS_AVAILABLE` | 503 | All 28 providers down or filtered out by your geo policy. | Retry in 30 s. |
+| `PROVIDER_ERROR` | 502 | Selected provider returned a transient error. | Re-quote, we'll route to a fallback. |
+| `QUOTE_EXPIRED` | 410 | `quote_id` no longer valid (5 min TTL). | Get a fresh `/estimate` and retry. |
+| `ORDER_NOT_FOUND` | 404 | Wrong `order_id` or order older than our retention. | Check spelling; orders retained 18 months. |
+| `DUPLICATE_ACTIVE_ORDER` | 409 | Logical-dup detection: same `partner_order_ref` already has an open order. | Reuse the existing `order_id` from response body. |
+| `REFUND_WINDOW_EXPIRED` | 409 | `/refund-action` called past `refund_window_hours`. | Order auto-resolved via `refund_preference.default`. |
+| `REFUND_NOT_PROGRAMMATIC` | 409 | Provider is ticket-based. | Show ticket UX, don't call `/refund-action`. |
+| `STABLE_TARGET_REQUIRED` | 400 | `convert_to_stable` requested without `stable_target`. | Set `stable_target`. |
+| `WEBHOOK_PAUSED` | 409 | Webhook resume attempted on already-active webhook. | Idempotent — safe to ignore. |
+| `SCOPE_REQUIRED` | 403 | Key missing required scope (e.g. `webhook:admin`). | Request scope expansion in dashboard. |
+
+## Error body extensions
+
+For form-validation-style errors we add a `fields` array:
+
+```json
+{
+  "error": {
+    "code": "INVALID_PAIR",
+    "message": "Validation failed",
+    "fields": [
+      { "field": "to", "issue": "currency XYZ not in /currencies" }
+    ]
+  }
+}
+```
+
+## SDK exception mapping
+
+The JS SDK maps every code to a typed subclass of `PrivataError`:
+
+```ts
+import { PrivataError, RateLimitedError, QuoteExpiredError } from "@privata/wallet-api";
+
+try {
+  await privata.createOrder({ ... });
+} catch (e) {
+  if (e instanceof RateLimitedError) {
+    await sleep(e.retryAfterMs);
+  } else if (e instanceof QuoteExpiredError) {
+    // re-quote
+  }
+}
+```

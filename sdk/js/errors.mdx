@@ -1,0 +1,72 @@
+---
+title: "Errors"
+description: "Typed exception hierarchy in the JS SDK."
+---
+
+## Hierarchy
+
+```
+PrivataError
+├── AuthError           (INVALID_KEY, SCOPE_REQUIRED)
+├── RateLimitedError    (RATE_LIMITED)              .retryAfterMs
+├── ValidationError     (INVALID_PAIR, AMOUNT_TOO_*) .fields
+├── QuoteExpiredError   (QUOTE_EXPIRED)
+├── OrderError
+│   ├── OrderNotFoundError       (ORDER_NOT_FOUND)
+│   └── DuplicateOrderError      (DUPLICATE_ACTIVE_ORDER) .existingOrderId
+├── ProviderError       (PROVIDER_ERROR, NO_PROVIDERS_AVAILABLE)
+├── RefundError
+│   ├── RefundWindowExpiredError (REFUND_WINDOW_EXPIRED)
+│   ├── RefundNotProgrammaticError (REFUND_NOT_PROGRAMMATIC)
+│   └── StableTargetRequiredError (STABLE_TARGET_REQUIRED)
+├── WebhookPausedError  (WEBHOOK_PAUSED)
+└── NetworkError        (timeouts, DNS, connection reset)
+```
+
+Every instance carries:
+
+```ts
+interface PrivataError extends Error {
+  code: string;
+  httpStatus: number;
+  requestId?: string;
+  message: string;
+}
+```
+
+## Pattern: handle known cases, surface the rest
+
+```ts
+import {
+  RateLimitedError,
+  QuoteExpiredError,
+  DuplicateOrderError,
+  ValidationError,
+  PrivataError,
+} from "@privata/wallet-api";
+
+try {
+  await privata.createOrder({ ... });
+} catch (e) {
+  if (e instanceof RateLimitedError) return retry(after: e.retryAfterMs);
+  if (e instanceof QuoteExpiredError) return reQuote();
+  if (e instanceof DuplicateOrderError) return privata.getOrder(e.existingOrderId);
+  if (e instanceof ValidationError) return showFieldErrors(e.fields);
+
+  // Surface unknown errors with request_id so support can trace.
+  if (e instanceof PrivataError) {
+    log.error({ code: e.code, requestId: e.requestId }, e.message);
+  }
+  throw e;
+}
+```
+
+## Auto-retry already covers
+
+These never reach you with the default config:
+
+- `429 RATE_LIMITED` (waits and retries)
+- `502/503/504` (3 retries with backoff)
+- Transient `NetworkError` (3 retries with backoff)
+
+To disable auto-retry: `new Privata({ apiKey, retries: { max: 0 } })`.

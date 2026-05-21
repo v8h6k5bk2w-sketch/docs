@@ -1,0 +1,67 @@
+---
+title: "Configuration"
+description: "All Privata client options."
+---
+
+## Constructor
+
+```ts
+new Privata(options: PrivataOptions);
+```
+
+```ts
+interface PrivataOptions {
+  apiKey: string;                            // pk_live_... or pk_test_...
+  baseUrl?: string;                          // default: "https://api.privataswap.com/partner/v1"
+  timeout?: number;                          // ms, default 30_000
+  retries?: { max?: number; baseDelayMs?: number; }; // default { max: 3, baseDelayMs: 500 }
+  fetch?: typeof globalThis.fetch;           // inject custom fetch (e.g. undici)
+  userAgent?: string;                        // appended to default UA
+  logger?: (line: { level: string; msg: string; meta?: any }) => void;
+  partnerOrderPrefix?: string;               // auto-prefix partnerOrderRef
+}
+```
+
+## Environments
+
+```ts
+const test = new Privata({ apiKey: "pk_test_..." });
+const live = new Privata({ apiKey: "pk_live_..." });
+```
+
+The SDK refuses to use `pk_live_` in a browser environment (`typeof window !== 'undefined'`)
+unless you set `dangerouslyAllowBrowser: true`. Use this for testing only.
+
+## Retries
+
+Automatic for idempotent verbs (GET, DELETE) and write verbs on safe codes
+(`502`, `503`, `504`, `429`). On `429` we honour `Retry-After`. Anything else
+is your decision.
+
+```ts
+new Privata({
+  apiKey,
+  retries: { max: 5, baseDelayMs: 1000 }, // 1s, 2s, 4s, 8s, 16s
+});
+```
+
+## Logging
+
+```ts
+new Privata({
+  apiKey,
+  logger: ({ level, msg, meta }) => myLogger[level](msg, meta),
+});
+```
+
+Levels: `debug` (HTTP roundtrips), `info` (SSE reconnects, webhook resume),
+`warn` (retries), `error` (terminal failures).
+
+## Custom HTTP
+
+```ts
+import { fetch as undiciFetch } from "undici";
+new Privata({ apiKey, fetch: undiciFetch });
+```
+
+Useful for Node 18 with old fetch, or for inserting a proxy / mock.

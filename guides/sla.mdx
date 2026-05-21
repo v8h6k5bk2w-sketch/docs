@@ -1,0 +1,65 @@
+---
+title: "SLA"
+description: "Uptime guarantees, compensation formula and how to claim credits."
+---
+
+## Tiers
+
+| Phase | Target uptime | Measurement |
+|---|---|---|
+| **Pilot (day 0-30)** | 99.5% with tariffed compensation | External prober against `/partner/v1/health` |
+| **Post-pilot (day 31+)** | 99.9% contractual | Same |
+| **Enterprise tier** | 99.9% from day 1 | Dedicated multi-region replication |
+
+## Probe contract
+
+- Prober: Pingdom, UptimeRobot or StatusCake.
+- Frequency: 1 minute interval, 3+ geographic locations (EU + US + Asia minimum).
+- Up = HTTP 200 with body `{"status":"ok"}`.
+- Probe IPs go on our allowlist (no rate limit). Submit them at
+  `partners@privataswap.com`.
+- Network failure on the probe side (provable via 3rd-party check) is excluded.
+
+## Pilot compensation
+
+| Uptime | Action |
+|---|---|
+| ≥99.5% | No compensation. |
+| 99.0-99.5% (3.6-7.2 h downtime/mo) | +10% rev-share uplift next calendar month. |
+| 95.0-99.0% (7.2-36 h) | +25% rev-share uplift + right to terminate pilot without notice. |
+| &lt;95.0% | +100% rev-share current month + termination. |
+
+For partners with &lt;100 orders/mo, uplift converts to flat USD per pilot agreement.
+
+## Post-pilot SLA credits
+
+| Uptime in month | Credit |
+|---|---|
+| &lt;99.9% | 10% of gross partner revenue that month |
+| &lt;99.0% | 25% |
+| &lt;95.0% | 100% |
+
+Credit applied in the next payout cycle, no claim form needed — we calculate
+from your prober data on file.
+
+## Enterprise tier
+
+Day-1 99.9% with:
+
+- Dedicated Slack channel with on-call engineers
+- 15-min response business hours / 1 h off-hours
+- Monthly architecture review session
+- 1 free RCA postmortem per month
+- **$3,500/mo flat** (or $2,500/mo without review + postmortem)
+- First 60 days free at confirmed ≥25K orders/mo pilot volume
+
+Email `partners@privataswap.com` to upgrade.
+
+## Public status
+
+`https://status.privataswap.com` carries:
+
+- Real-time uptime by region
+- Incident history with RCA links
+- Subscribe via RSS, email or Slack
+- Scheduled maintenance windows (always announced ≥7 days out)

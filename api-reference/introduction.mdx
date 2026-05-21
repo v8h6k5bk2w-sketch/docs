@@ -1,33 +1,45 @@
 ---
-title: 'Introduction'
-description: 'Example section for showcasing API endpoints'
+title: "API Reference"
+description: "REST API for the Privata swap aggregator. 28 providers, single surface."
 ---
 
-<Note>
-  If you're not looking to build API reference documentation, you can delete
-  this section by removing the api-reference folder.
-</Note>
+## Base URL
 
-## Welcome
+```
+https://api.privataswap.com/partner/v1
+```
 
-There are two ways to build API documentation: [OpenAPI](https://mintlify.com/docs/api-playground/openapi/setup) and [MDX components](https://mintlify.com/docs/api-playground/mdx/configuration). For the starter kit, we are using the following OpenAPI specification.
-
-<Card
-  title="Plant Store Endpoints"
-  icon="leaf"
-  href="https://github.com/mintlify/starter/blob/main/api-reference/openapi.json"
->
-  View the OpenAPI specification file
-</Card>
+Sandbox: `https://api.privataswap.com/partner/v1` with `pk_test_` key.
 
 ## Authentication
 
-All API endpoints are authenticated using Bearer tokens and picked up from the specification file.
+Every request requires `X-API-Key: pk_live_...` or `pk_test_...`. See [Authentication](/guides/authentication).
 
-```json
-"security": [
-  {
-    "bearerAuth": []
-  }
-]
-```
+## Versioning
+
+Current: `v1.2`. Breaking changes ship under new major path (`/partner/v2`). Additive changes are backward-compatible inside `v1.x`.
+
+## Conventions
+
+- Times: ISO 8601 UTC (`2026-05-21T13:00:00Z`)
+- Amounts: strings, native token precision
+- Errors: structured JSON, see [Error codes](/guides/errors)
+- Idempotency: `Idempotency-Key` on `POST /orders`, 24h window
+- Rate limits: 100 rps default, see [Rate limits](/guides/rate-limits)
+
+## Quick links
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="bolt" href="/guides/quickstart">
+    Create your first order in 5 minutes.
+  </Card>
+  <Card title="SSE streaming" icon="signal-stream" href="/guides/sse-streaming">
+    Live order updates without webhooks.
+  </Card>
+  <Card title="Webhooks" icon="webhook" href="/guides/webhooks">
+    HMAC-signed delivery with dual-sign rotation.
+  </Card>
+  <Card title="SDK (JS/TS)" icon="js" href="/sdk/js/install">
+    Typed client with auto-retry and SSE.
+  </Card>
+</CardGroup>

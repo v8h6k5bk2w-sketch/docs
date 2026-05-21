@@ -1,0 +1,58 @@
+---
+title: "Order lifecycle"
+description: "Every status, every transition, every UX hint."
+---
+
+## States
+
+| Status | Meaning | Terminal |
+|---|---|---|
+| `waiting_deposit` | Order created, deposit address shown, awaiting user funds. | no |
+| `confirming` | Deposit detected on-chain, awaiting block confirmations. | no |
+| `exchanging` | Provider received funds and is converting. | no |
+| `sending` | Provider broadcasts the payout transaction. | no |
+| `completed` | Payout confirmed. `amount_to_actual` and `tx_out_hash` are set. | **yes** |
+| `failed` | Permanent failure. Inspect `failed_reason_code`. | **yes** |
+| `expired` | User never sent funds before `expires_at`. | **yes** |
+| `refund_required` | Manual intervention needed (overpayment / underpayment / KYT / rate change). | no |
+| `refunded` | Refund executed back to `refund_address` or converted to stable. | **yes** |
+| `manual_review` | Provider needs human review or refund without consent surface. | no |
+
+## Allowed transitions
+
+```
+waiting_deposit ──→ confirming ──→ exchanging ──→ sending ──→ completed
+       │                │              │                       
+       ↓                ↓              ↓                       
+   expired           refund_required ←──── (any non-terminal)  
+                          │                                    
+                          ├──→ refunded                        
+                          └──→ manual_review                   
+```
+
+States never go backward. `failed` is reachable from any non-terminal state.
+
+## `failed_reason_code` enum
+
+| Code | What it means | Suggested UX |
+|---|---|---|
+| `kyt_block` | Receive or refund address hit a sanctions/KYT list. | "Address rejected by compliance check. Try another address." |
+| `amount_out_of_range` | Provider's min/max changed after quote. | "Amount no longer supported. Get a new quote." |
+| `rate_changed` | Rate moved beyond slippage tolerance. | "Rate moved. Confirm a new quote." |
+| `provider_timeout` | Upstream provider unresponsive. | "Provider didn't respond. Picking another." |
+| `provider_internal` | Provider returned 5xx during execution. | Same. |
+| `underpayment` | User sent less than expected. | Triggers `refund_required` instead in most cases. |
+| `overpayment` | User sent more than expected. | Same. |
+| `network_congestion` | Blockchain fees spiked and order can't proceed. | "Network congestion, please retry later." |
+| `unknown` | Anything else. | Show `failed_reason_message`. |
+
+## Event timing expectations
+
+| Pair class | `confirming` → `completed` p95 |
+|---|---|
+| EVM → EVM (same chain) | ~3 min |
+| BTC → anything | ~25 min |
+| anything → XMR | ~12 min |
+| Lightning → anything | ~1 min |
+
+These are aggregate provider numbers. Surface them as ETA hints — never as guarantees.

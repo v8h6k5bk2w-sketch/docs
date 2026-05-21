@@ -1,0 +1,65 @@
+---
+title: "Ops events"
+description: "Operational signals for your integration health monitoring."
+---
+
+## What they are
+
+A separate webhook channel (different URL from your order webhooks) that
+carries signals about your integration itself — not user-facing order data.
+
+Configure the Ops URL in dashboard → Webhooks → Ops URL. You can also point
+this at a Slack incoming webhook (`hooks.slack.com/services/...`) — we detect
+it and format the payload as Slack blocks.
+
+## Event catalog
+
+| Event | Trigger | Recommended action |
+|---|---|---|
+| `webhook_paused` | 50 webhook failures in 6 h. | Investigate your endpoint, call `/webhook/resume` once fixed. |
+| `webhook_resumed` | After manual or automatic resume. | Informational. |
+| `api_key_locked` | 5 INVALID_KEY responses from same IP in 60 s. | Check who's calling with bad key. |
+| `api_key_unlocked` | 15-min lockout expired. | Informational. |
+| `sla_breach_threshold` | Rolling 24 h uptime drops below 99.0%. | Page your team — you're in compensation territory. |
+| `provider_outage_affecting_partner` | A provider you've used >10× in last 24 h goes down. | Surface "some providers degraded" in your UI. |
+
+## Payload
+
+```json
+{
+  "event": "webhook_paused",
+  "reason": "50_failures_in_6h",
+  "paused_at": "2026-05-25T14:32:11Z",
+  "resume_after": "2026-05-25T20:32:11Z",
+  "last_error": "connection_timeout"
+}
+```
+
+Signed identically to order webhooks (`X-Privata-Signature`,
+`X-Privata-Event-Id`), with the same retry schedule.
+
+## Slack format
+
+When the configured URL is `hooks.slack.com/services/...` we wrap the payload:
+
+```json
+{
+  "text": "Privata: webhook_paused",
+  "blocks": [
+    { "type": "section", "text": { "type": "mrkdwn", "text": "*webhook_paused* — 50_failures_in_6h" } },
+    { "type": "context", "elements": [ { "type": "mrkdwn", "text": "Last error: connection_timeout · Resume after: <!date^1716321131^{date_short_pretty} {time}|2026-05-25 20:32 UTC>" } ] }
+  ]
+}
+```
+
+## Auto-resume
+
+If your CI knows the endpoint is back, hit:
+
+```http
+POST /partner/v1/webhook/resume
+X-API-Key: pk_live_... (scope: webhook:admin)
+```
+
+Returns `200 OK` (idempotent) or `409 WEBHOOK_PAUSED` if not actually paused
+(also safe to ignore).

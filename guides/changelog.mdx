@@ -1,0 +1,52 @@
+---
+title: "Changelog"
+description: "API and SDK release notes."
+---
+
+## v1.2 — 2026-05-21
+
+Released alongside Trust Wallet pilot preparation.
+
+**New endpoints**
+- `POST /partner/v1/order/{id}/refund-action` — partner-confirmed refund.
+- `GET /partner/v1/providers/refund-capability` — live programmatic vs ticket list.
+- `POST /partner/v1/webhook/resume` — manual resume after auto-pause.
+
+**Schema changes**
+- `CreateOrderRequest.refund_preference` added (optional, default
+  `return_to_refund_address` / `manual_review`).
+- `Order.refund_capability`, `refund_window_hours`, `refund_sla_hours` added.
+- New status: `refund_required` (between non-terminal and `refunded`).
+- New error codes: `DUPLICATE_ACTIVE_ORDER`, `REFUND_WINDOW_EXPIRED`,
+  `REFUND_NOT_PROGRAMMATIC`, `STABLE_TARGET_REQUIRED`, `WEBHOOK_PAUSED`,
+  `SCOPE_REQUIRED`.
+
+**SSE**
+- Response headers `Privata-Resume-Source` (`buffer | snapshot | fresh`) and
+  `Privata-Resume-Gap-Ms` added.
+
+**Webhooks**
+- Separate Ops events channel introduced — configure a second URL in dashboard.
+- Dual-sign 5-minute grace window on secret rotation.
+
+**SLA**
+- Pilot tariffed compensation table published.
+- Enterprise tier $3,500/mo (or $2,500/mo lite) day-1 99.9%.
+
+## v1.1 — 2026-05-20
+
+- SDK switches to camelCase publicly, internally maps to snake_case wire format.
+- API key bcrypt cache (in-memory) to keep auth path off the hot CPU path.
+- Webhook URL SSRF guard (block private IPs, cloud metadata, require HTTPS in prod).
+- Tracking URL signed with HMAC token (UUID-guessing closed).
+- IP extraction via trusted-proxy chain (correct `X-Forwarded-For` handling).
+- Sandbox orders flagged `sandbox=1` and excluded from payouts.
+
+## v1.0 — 2026-05-15
+
+Initial partner API.
+
+- 28 providers behind `/partner/v1/*`.
+- ChangeNOW-compatible `/v2/exchange/*` shim.
+- SSE + webhooks.
+- Sandbox via `pk_test_` keys.

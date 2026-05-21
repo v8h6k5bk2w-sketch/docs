@@ -1,0 +1,45 @@
+---
+title: "Sandbox"
+description: "Deterministic test environment isolated from production payouts."
+---
+
+## How sandbox works
+
+- Use `pk_test_...` keys. Same base URL, same paths.
+- Orders are tagged `sandbox=1` server-side. They never hit live providers and
+  never appear in your payout calculations.
+- Provider responses are mocked deterministically. Network confirmations are
+  simulated; nothing is ever broadcast.
+
+## Driving lifecycle with `sandbox_scenario`
+
+Pass `sandbox_scenario` on `/order/create` (only honoured for `pk_test_` keys):
+
+| Scenario | Resulting path |
+|---|---|
+| `success` (default) | `waiting_deposit → confirming → exchanging → sending → completed` over ~30 s |
+| `fail` | `waiting_deposit → failed` with `failed_reason_code=provider_internal` |
+| `refund` | `waiting_deposit → confirming → refund_required` |
+| `stuck` | `waiting_deposit → confirming` then stops (for retry/manual-review UI testing) |
+| `expire` | Stays `waiting_deposit` until `expires_at` then transitions to `expired` |
+
+Optional `sandbox_ttl=<seconds>` shortens lifecycle for fast CI runs.
+
+## Webhook delivery in sandbox
+
+Webhooks fire normally with `"sandbox": true` at the top level. Use a separate
+sandbox webhook URL in the dashboard so you don't pollute production logs.
+
+## Sandbox SSE concurrency
+
+Same headers and resume semantics as production, but the per-partner cap is
+fixed at **50 concurrent** regardless of tier.
+
+## When to leave sandbox
+
+Before you can flip to `pk_live_`:
+
+1. KYB form submitted in the dashboard.
+2. Webhook URL whitelist passes our SSRF guard (HTTPS + public IP).
+3. At least one successful sandbox round-trip on each pair class you support.
+4. Payout address verified (we send a $1 test transaction; you confirm receipt).

@@ -1,0 +1,77 @@
+---
+title: "Streaming"
+description: "Subscribe to order status with the SDK helper."
+---
+
+## Basic usage
+
+```ts
+const stream = privata.streamOrder(orderId);
+
+for await (const event of stream) {
+  console.log(event.status, event.eventId);
+  if (["completed", "failed", "expired", "refunded"].includes(event.status)) {
+    break;
+  }
+}
+```
+
+The async iterator closes automatically on terminal status, so a plain
+`for await` is enough.
+
+## Event object
+
+```ts
+interface StreamEvent {
+  orderId: string;
+  status: OrderStatus;
+  eventId: string;     // "<order_id>:<status>:<unix_ms>"
+  ts: string;          // ISO
+  raw: any;            // full payload
+}
+```
+
+## Listeners
+
+```ts
+const stream = privata.streamOrder(orderId);
+
+stream.on("status", (e) => updateUi(e.status));
+stream.on("resume", (source, gapMs) => {
+  if (source === "snapshot") log.warn("SSE snapshot fallback, gap=" + gapMs);
+});
+stream.on("degraded", () => log.warn("Stream degraded to polling"));
+stream.on("error", (err) => log.error(err));
+stream.on("close", () => log.info("Stream closed"));
+```
+
+## Reconnection
+
+Built-in. Backoff `1s, 2s, 5s, 15s, 30s, 30s...`. On reconnect we send
+`Last-Event-ID` so you don't lose events as long as the gap stays under
+60 seconds (the server's ring buffer window).
+
+## Degraded polling fallback
+
+After **5 consecutive failed reconnects**, the SDK switches to polling
+`GET /order/{id}` every 10 s and emits a `degraded` event. It will keep
+trying to upgrade back to SSE in the background every 60 s.
+
+Disable this with:
+
+```ts
+privata.streamOrder(orderId, { fallbackPollingMs: 0 });
+```
+
+## Manual close
+
+```ts
+const stream = privata.streamOrder(orderId);
+stream.close();   // idempotent
+```
+
+## Concurrency
+
+Each `streamOrder()` call counts as one SSE connection against your tier cap.
+Use a single stream per order — fan out internally with an EventEmitter if
+multiple consumers need the same data.

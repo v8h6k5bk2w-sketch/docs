@@ -1,0 +1,84 @@
+---
+title: "Quickstart"
+description: "First swap order with the JS SDK."
+---
+
+```ts
+import { Privata } from "@privata/wallet-api";
+
+const privata = new Privata({
+  apiKey: process.env.PRIVATA_API_KEY!,
+  // optional:
+  // baseUrl: "https://api.privataswap.com/partner/v1",
+  // timeout: 30_000,
+  // retries: { max: 3 },
+});
+
+const quote = await privata.estimate({ from: "BTC", to: "XMR", amount: "0.05" });
+
+const order = await privata.createOrder({
+  quoteId: quote.quoteId,
+  address: "4ABCxyz...",
+  refundAddress: "bc1q...",
+});
+
+// poll
+const fresh = await privata.getOrder(order.orderId);
+
+// or stream
+for await (const event of privata.streamOrder(order.orderId)) {
+  if (event.status === "completed") break;
+}
+```
+
+## Common patterns
+
+### Quote + create as a single user action
+
+```ts
+async function startSwap(input: SwapForm): Promise<Order> {
+  const quote = await privata.estimate({
+    from: input.fromAsset,
+    to: input.toAsset,
+    amount: input.amountFrom,
+    side: "send",
+  });
+
+  return privata.createOrder({
+    quoteId: quote.quoteId,
+    address: input.payoutAddress,
+    refundAddress: input.refundAddress ?? null,
+    partnerOrderRef: input.internalId,  // for logical-dup detection
+  });
+}
+```
+
+### Reusing an existing active order on retry
+
+```ts
+try {
+  return await privata.createOrder({ quoteId, address, partnerOrderRef });
+} catch (e) {
+  if (e.code === "DUPLICATE_ACTIVE_ORDER") {
+    return privata.getOrder(e.existingOrderId);
+  }
+  throw e;
+}
+```
+
+### Refund-aware UX from the start
+
+```ts
+const order = await privata.createOrder({ ... });
+
+ui.showDeposit(order.depositAddress);
+ui.setRefundMode(order.refundCapability);   // "programmatic" | "ticket"
+```
+
+When the order later reaches `refund_required`:
+
+```ts
+if (order.refundCapability === "programmatic") {
+  await privata.refundAction(order.orderId, { action: "refund_to_address" });
+}
+```

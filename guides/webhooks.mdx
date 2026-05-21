@@ -1,0 +1,85 @@
+---
+title: "Webhooks"
+description: "Signed HTTP callbacks with retry, deduplication and ops events."
+---
+
+## Two channels
+
+| Channel | URL configured in | Events |
+|---|---|---|
+| Order events | Dashboard → Webhooks → Order URL | `order.*` |
+| Ops events | Dashboard → Webhooks → Ops URL | `webhook_paused`, `api_key_locked`, `sla_breach_threshold`, `provider_outage_affecting_partner`, etc. |
+
+You can also point Ops URL at a Slack incoming webhook — we detect `hooks.slack.com`
+and format the payload as a Slack block.
+
+## Signature
+
+Every request carries:
+
+```http
+X-Privata-Signature: t=1716293641,v1=base64(hmac_sha256(secret, "t.body"))
+X-Privata-Event-Id: ord_abc.completed.1716293641000
+```
+
+Verify with constant-time comparison. SDK helper:
+
+```ts
+import { verifyWebhook } from "@privata/wallet-api/webhooks";
+
+app.post("/webhooks/privata", express.raw({ type: "*/*" }), (req, res) => {
+  const ok = verifyWebhook(req.body, req.header("x-privata-signature"), process.env.WHSEC!);
+  if (!ok) return res.status(401).end();
+  // de-dup on x-privata-event-id, idempotent processing
+  res.status(200).end();
+});
+```
+
+<Warning>
+Always use the raw body for verification. JSON-parsed bodies will fail because
+of whitespace normalization.
+</Warning>
+
+## Secret rotation
+
+Rotate from the dashboard. We dual-sign with old and new secret for **5 minutes**
+to give your handler time to deploy the new value. After 5 min the old secret
+is rejected.
+
+## Retry schedule
+
+7 attempts over 24 h: `1m, 5m, 15m, 1h, 4h, 12h, 24h`. After 50 failures in 6 h
+the webhook URL is auto-paused — you get a `webhook_paused` ops event, and the
+order events queue up but are not dropped (they replay on resume).
+
+Resume manually with:
+
+```http
+POST /partner/v1/webhook/resume
+X-API-Key: pk_live_... (scope: webhook:admin)
+```
+
+## URL requirements
+
+- HTTPS required in production. HTTP allowed only when URL is `http://localhost:*`
+  with a `pk_test_` key.
+- Public IP. We block private ranges, cloud metadata endpoints (`169.254.169.254`,
+  `metadata.google.internal`) and link-local addresses via SSRF guard at registration.
+- DNS rebinding protection: we resolve and pin the IP for 5 min on first delivery.
+
+## Event payload
+
+```json
+{
+  "event": "order.completed",
+  "event_id": "prv-9f0e:completed:1716293641000",
+  "order": { "...full Order object..." },
+  "ts": "2026-05-21T10:14:01Z"
+}
+```
+
+## Sandbox
+
+Webhooks fire from sandbox orders too, but with `"sandbox": true` field at the
+top level. Filter or accept based on your testing strategy. Sandbox webhook
+signatures use a separate `whsec_test_...` secret.

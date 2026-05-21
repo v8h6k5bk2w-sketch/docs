@@ -1,126 +1,158 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
-  "name": "Mintlify Starter Kit",
+  "name": "Privata",
+  "description": "API and SDK for integrating Privata swap aggregator into crypto wallets. 28 providers, single REST surface, privacy by design.",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#7C5CFF",
+    "light": "#A491FF",
+    "dark": "#4F3BC4"
   },
-  "favicon": "/favicon.svg",
+  "logo": {
+    "light": "/images/logo-light.svg",
+    "dark": "/images/logo-dark.svg",
+    "href": "https://privataswap.com"
+  },
+  "favicon": "/images/favicon.svg",
+  "appearance": {
+    "default": "dark",
+    "strict": false
+  },
+  "background": {
+    "color": {
+      "light": "#FFFFFF",
+      "dark": "#0A0A12"
+    }
+  },
+  "navbar": {
+    "links": [
+      { "label": "Dashboard", "href": "https://dashboard.privataswap.com" },
+      { "label": "Status", "href": "https://status.privataswap.com" }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "Get API key",
+      "href": "https://dashboard.privataswap.com/signup"
+    }
+  },
   "navigation": {
     "tabs": [
       {
         "tab": "Guides",
         "groups": [
           {
-            "group": "Getting started",
+            "group": "Get started",
+            "pages": ["index", "guides/quickstart", "guides/authentication"]
+          },
+          {
+            "group": "Core flows",
             "pages": [
-              "index",
-              "quickstart",
-              "development"
+              "guides/order-lifecycle",
+              "guides/refund-flow",
+              "guides/sse-streaming",
+              "guides/webhooks",
+              "guides/sandbox"
             ]
           },
           {
-            "group": "Customization",
+            "group": "Operations",
             "pages": [
-              "essentials/settings",
-              "essentials/navigation"
-            ]
-          },
-          {
-            "group": "Writing content",
-            "pages": [
-              "essentials/markdown",
-              "essentials/code",
-              "essentials/images",
-              "essentials/components",
-              "essentials/reusable-snippets"
-            ]
-          },
-          {
-            "group": "Agent ready",
-            "pages": [
-              "agent-ready/prompt",
-              "agent-ready/visibility",
-              "agent-ready/contextual",
-              "ai-tools/cursor",
-              "ai-tools/claude-code",
-              "ai-tools/windsurf"
+              "guides/rate-limits",
+              "guides/errors",
+              "guides/sla",
+              "guides/ops-events",
+              "guides/changelog"
             ]
           }
         ]
       },
       {
-        "tab": "API reference",
+        "tab": "API Reference",
         "groups": [
           {
-            "group": "API documentation",
+            "group": "Overview",
+            "pages": ["api-reference/introduction"]
+          },
+          {
+            "group": "Endpoints",
+            "openapi": {
+              "source": "/api-reference/openapi.yaml",
+              "directory": "api-reference"
+            }
+          }
+        ]
+      },
+      {
+        "tab": "SDK",
+        "groups": [
+          {
+            "group": "JavaScript / TypeScript",
             "pages": [
-              "api-reference/introduction"
+              "sdk/js/install",
+              "sdk/js/quickstart",
+              "sdk/js/configuration",
+              "sdk/js/errors",
+              "sdk/js/streaming"
             ]
           },
           {
-            "group": "Endpoint examples",
+            "group": "Compatibility layers",
             "pages": [
-              "api-reference/endpoint/get",
-              "api-reference/endpoint/create",
-              "api-reference/endpoint/delete",
-              "api-reference/endpoint/webhook"
+              "sdk/compat/changenow",
+              "sdk/compat/trocador"
             ]
           }
         ]
       }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
-        },
-        {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
-        }
-      ]
-    }
-  },
-  "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
-  },
-  "navbar": {
-    "links": [
-      {
-        "label": "Support",
-        "href": "mailto:hi@mintlify.com"
-      }
-    ],
-    "primary": {
-      "type": "button",
-      "label": "Dashboard",
-      "href": "https://dashboard.mintlify.com"
-    }
-  },
-  "contextual": {
-    "options": [
-     "copy",
-     "view",
-     "chatgpt",
-     "claude",
-     "perplexity",
-     "mcp",
-     "cursor",
-     "vscode"
-   ]
+    ]
   },
   "footer": {
     "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
-    }
+      "x": "https://x.com/privataswap",
+      "github": "https://github.com/privataswap",
+      "telegram": "https://t.me/privataswap"
+    },
+    "links": [
+      {
+        "header": "Product",
+        "items": [
+          { "label": "Swap", "href": "https://privataswap.com" },
+          { "label": "Dashboard", "href": "https://dashboard.privataswap.com" },
+          { "label": "Status", "href": "https://status.privataswap.com" }
+        ]
+      },
+      {
+        "header": "Developers",
+        "items": [
+          { "label": "API Reference", "href": "https://docs.privataswap.com/api-reference" },
+          { "label": "SDK", "href": "https://docs.privataswap.com/sdk/js/install" },
+          { "label": "Changelog", "href": "https://docs.privataswap.com/guides/changelog" }
+        ]
+      },
+      {
+        "header": "Legal",
+        "items": [
+          { "label": "Terms", "href": "https://privataswap.com/terms" },
+          { "label": "Privacy", "href": "https://privataswap.com/privacy" }
+        ]
+      }
+    ]
+  },
+  "search": {
+    "prompt": "Ask the Privata docs..."
+  },
+  "seo": {
+    "metatags": {
+      "og:site_name": "Privata Docs",
+      "twitter:site": "@privataswap"
+    },
+    "indexing": "all"
+  },
+  "integrations": {
+    "ga4": { "measurementId": "G-PRIVATA" },
+    "plausible": { "domain": "docs.privataswap.com" }
+  },
+  "contextual": {
+    "options": ["copy", "view", "chatgpt", "claude", "perplexity"]
   }
 }

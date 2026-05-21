@@ -1,0 +1,7 @@
+node_modules/
+.next/
+.mintlify/
+export/
+export.zip
+*.log
+.DS_Store

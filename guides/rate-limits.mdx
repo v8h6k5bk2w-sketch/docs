@@ -1,0 +1,54 @@
+---
+title: "Rate limits"
+description: "Per-IP and per-partner limits across all endpoint classes."
+---
+
+## Default limits
+
+| Class | Without key (per IP) | With key (per partner) |
+|---|---|---|
+| Public reads | 60 req/min | 600 req/min |
+| Write (`/order/*` POST) | n/a | 60 req/min |
+| Bulk pricing (`/estimate?include=all`) | 10 req/min | 10 req/min |
+| SSE concurrent connections | n/a | tier-dependent (see below) |
+| `/health` for allowlisted probers | no limit | no limit |
+
+## Tier-dependent SSE caps
+
+| Tier | Max concurrent SSE |
+|---|---|
+| Trial (3 months, 50% rev-share) | 50 |
+| Starter (35%) | 200 |
+| Growth (40%) | 500 |
+| Scale (50%) | 1,500 |
+| Enterprise (60%, custom) | by contract |
+
+One SSE connection counts as **1 read** in the 30-second-per-read bucket
+(not 1 per event).
+
+## Headers
+
+Every response includes:
+
+```http
+X-RateLimit-Limit: 600
+X-RateLimit-Remaining: 587
+X-RateLimit-Reset: 1716293700
+```
+
+On `429 RATE_LIMITED`:
+
+```http
+Retry-After: 12
+```
+
+## Burst behaviour
+
+We use a token-bucket with **1 s refill**. You can burst up to your minute
+limit instantly, then refill at limit/60 per second. SDK respects
+`Retry-After` and exponential-backoffs automatically.
+
+## Need higher limits?
+
+Email `partners@privataswap.com` with your tier, projected RPS and use-case.
+Enterprise tier includes raised hard limits negotiable per contract.

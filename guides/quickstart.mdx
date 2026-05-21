@@ -1,0 +1,97 @@
+---
+title: "Quickstart"
+description: "Create your first swap order in five minutes."
+---
+
+## 1. Get an API key
+
+Sign up at [dashboard.privataswap.com](https://dashboard.privataswap.com). You get
+two keys immediately:
+
+- `pk_test_...` — sandbox. Orders are flagged `sandbox=1` and excluded from payouts.
+- `pk_live_...` — production. Orders count toward your revenue share.
+
+<Warning>
+Never ship `pk_live_` keys in mobile or web bundles. The SDK enforces a runtime
+check and warns when a live key is used from a browser bundle.
+</Warning>
+
+## 2. Install the SDK
+
+<CodeGroup>
+```bash npm
+npm install @privata/wallet-api
+```
+```bash pnpm
+pnpm add @privata/wallet-api
+```
+```bash yarn
+yarn add @privata/wallet-api
+```
+</CodeGroup>
+
+## 3. Quote and create an order
+
+```ts
+import { Privata } from "@privata/wallet-api";
+
+const privata = new Privata({ apiKey: process.env.PRIVATA_API_KEY! });
+
+// 1. Get the best quote across 28 providers.
+const quote = await privata.estimate({
+  from: "BTC",
+  to: "XMR",
+  amount: "0.05",
+  side: "send",
+});
+
+// 2. Create the order.
+const order = await privata.createOrder({
+  quoteId: quote.quoteId,
+  address: "4ABCxyz...",            // payout address (user's wallet receive addr)
+  refundAddress: "bc1q...",         // recommended: where to send funds on refund
+  refundPreference: {
+    default: "return_to_refund_address",
+    fallbackIfRefundAddressMissing: "manual_review",
+  },
+});
+
+console.log(order.depositAddress);   // show this in your UI
+console.log(order.refundCapability); // "programmatic" | "ticket"
+```
+
+## 4. Track status
+
+Pick **one** transport. Don't combine both — events will duplicate.
+
+<Tabs>
+  <Tab title="SSE (recommended)">
+```ts
+const stream = privata.streamOrder(order.orderId);
+for await (const event of stream) {
+  console.log(event.status, event.eventId);
+  if (event.status === "completed" || event.status === "refunded") break;
+}
+```
+The SDK handles `Last-Event-ID` reconnection and exposes `Privata-Resume-Source`
+via `stream.lastResumeSource`.
+  </Tab>
+  <Tab title="Webhooks">
+Register your URL in the dashboard. We POST signed `order.*` events to it with
+retry schedule `1m / 5m / 15m / 1h / 4h / 12h / 24h` (7 attempts).
+Verify the signature:
+```ts
+import { verifyWebhook } from "@privata/wallet-api/webhooks";
+const ok = verifyWebhook(rawBody, req.headers["x-privata-signature"], secret);
+```
+  </Tab>
+</Tabs>
+
+## 5. Move to production
+
+1. Swap the `pk_test_` key for `pk_live_` in your environment.
+2. Confirm your webhook URL is reachable from `*.privataswap.com` ranges (see [IP allowlist](/guides/webhooks)).
+3. Subscribe to the [status page](https://status.privataswap.com) RSS for incident notifications.
+4. Add a [Pingdom probe](/guides/sla) against `GET /partner/v1/health` if you want SLA credits.
+
+You're live.

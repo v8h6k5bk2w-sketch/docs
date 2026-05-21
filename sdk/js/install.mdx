@@ -1,0 +1,50 @@
+---
+title: "Install"
+description: "Install @privata/wallet-api for JavaScript and TypeScript."
+---
+
+## Requirements
+
+- Node.js ≥ 20.10 (or any modern runtime that supports `fetch`, `AbortController`, native `EventSource`).
+- Works in Node, Bun, Deno, Cloudflare Workers, React Native (with polyfill), browser (test keys only).
+
+## Install
+
+<CodeGroup>
+```bash npm
+npm install @privata/wallet-api
+```
+```bash pnpm
+pnpm add @privata/wallet-api
+```
+```bash yarn
+yarn add @privata/wallet-api
+```
+```bash bun
+bun add @privata/wallet-api
+```
+</CodeGroup>
+
+## Verify
+
+```ts
+import { Privata } from "@privata/wallet-api";
+console.log(Privata.VERSION);  // "1.1.0"
+```
+
+## TypeScript
+
+Types ship with the package. No separate `@types/...` needed.
+
+```ts
+import type { Order, Quote, RefundPreference, OrderStatus } from "@privata/wallet-api";
+```
+
+## Bundle size
+
+- ESM gzipped: ~12 kB
+- Tree-shakable — import only what you use:
+  ```ts
+  import { Privata } from "@privata/wallet-api";
+  import { verifyWebhook } from "@privata/wallet-api/webhooks";
+  ```

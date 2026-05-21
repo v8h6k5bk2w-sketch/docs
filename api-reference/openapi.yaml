@@ -1,0 +1,600 @@
+openapi: 3.1.0
+info:
+  title: Privata Wallet API
+  version: 1.2.0
+  summary: REST API for integrating Privata swap aggregator into crypto wallets.
+  description: |
+    Privata is a non-custodial swap aggregator. Wallets call this API to fetch
+    quotes from 28 providers, create exchange orders with deposit addresses,
+    and track order lifecycle via webhooks or Server-Sent Events.
+
+    Wire format is snake_case. The official JS/TS SDK (`@privata/wallet-api`)
+    exposes camelCase and handles the conversion at the SDK boundary.
+  contact:
+    name: Privata partner support
+    email: partners@privataswap.com
+    url: https://docs.privataswap.com
+  license:
+    name: Proprietary
+servers:
+  - url: https://api.privataswap.com/partner/v1
+    description: Production
+  - url: https://api.privataswap.com/v2/exchange
+    description: ChangeNOW-compatible layer (legacy clients)
+security:
+  - apiKey: []
+tags:
+  - name: Public
+    description: Read endpoints. Work without an API key at lower rate-limit.
+  - name: Orders
+    description: Create and track exchange orders.
+  - name: Refunds
+    description: Refund capability and partner-confirmed refund actions.
+  - name: Streaming
+    description: SSE event stream for order status.
+  - name: Webhooks
+    description: Outbound HTTP callbacks to your endpoint.
+  - name: Partner
+    description: Self-service stats and history for the authenticated partner.
+  - name: Health
+    description: Uptime probe surface.
+paths:
+  /currencies:
+    get:
+      tags: [Public]
+      summary: List supported currencies
+      security: []
+      parameters:
+        - in: query
+          name: active
+          schema: { type: boolean }
+        - in: query
+          name: fixed_rate
+          schema: { type: boolean }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Currency" }
+  /pairs:
+    get:
+      tags: [Public]
+      summary: List supported pairs
+      security: []
+      parameters:
+        - in: query
+          name: from
+          schema: { type: string }
+        - in: query
+          name: to
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Pair" }
+  /estimate:
+    get:
+      tags: [Public]
+      summary: Get best-rate estimate for a swap
+      security: []
+      parameters:
+        - in: query
+          name: from
+          required: true
+          schema: { type: string, example: BTC }
+        - in: query
+          name: to
+          required: true
+          schema: { type: string, example: XMR }
+        - in: query
+          name: from_network
+          schema: { type: string, example: btc }
+        - in: query
+          name: to_network
+          schema: { type: string, example: xmr }
+        - in: query
+          name: amount
+          required: true
+          schema: { type: string, example: "0.05" }
+        - in: query
+          name: side
+          schema: { type: string, enum: [send, receive], default: send }
+        - in: query
+          name: include
+          description: Set to `all` to receive quotes from every provider.
+          schema: { type: string, enum: [best, all] }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Estimate" }
+        "400":
+          $ref: "#/components/responses/Error"
+  /limits:
+    get:
+      tags: [Public]
+      summary: Get min/max amounts for a pair
+      security: []
+      parameters:
+        - in: query
+          name: from
+          required: true
+          schema: { type: string }
+        - in: query
+          name: to
+          required: true
+          schema: { type: string }
+        - in: query
+          name: from_network
+          schema: { type: string }
+        - in: query
+          name: to_network
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  min: { type: string, example: "0.001" }
+                  max: { type: string, example: "10" }
+  /order/create:
+    post:
+      tags: [Orders]
+      summary: Create an exchange order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateOrderRequest" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Order" }
+        "400":
+          $ref: "#/components/responses/Error"
+        "409":
+          description: DUPLICATE_ACTIVE_ORDER
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+  /order/{order_id}:
+    get:
+      tags: [Orders]
+      summary: Get order status
+      parameters:
+        - in: path
+          name: order_id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Order" }
+        "404":
+          $ref: "#/components/responses/Error"
+  /order/{order_id}/stream:
+    get:
+      tags: [Streaming]
+      summary: Subscribe to order status via SSE
+      description: |
+        Returns `text/event-stream`. Each event id is
+        `<order_id>:<status>:<unix_ms>`. Reconnect with `Last-Event-ID`
+        header to resume from the in-memory ring buffer (60 s).
+
+        Response header `Privata-Resume-Source` is one of `buffer`,
+        `snapshot`, or `fresh`. When `snapshot` is returned,
+        `Privata-Resume-Gap-Ms` carries the gap to the last known event.
+      parameters:
+        - in: path
+          name: order_id
+          required: true
+          schema: { type: string }
+        - in: header
+          name: Last-Event-ID
+          required: false
+          schema: { type: string }
+      responses:
+        "200":
+          description: SSE stream
+          headers:
+            Privata-Resume-Source:
+              schema: { type: string, enum: [buffer, snapshot, fresh] }
+            Privata-Resume-Gap-Ms:
+              schema: { type: integer }
+          content:
+            text/event-stream:
+              schema: { type: string }
+  /order/{order_id}/refund-action:
+    post:
+      tags: [Refunds]
+      summary: Confirm refund action for an order in refund_required state
+      description: |
+        Only valid when the order's `refund_capability` is `programmatic`.
+        Must be called within `refund_window_hours` from `order.refund_required`.
+        After the window the server auto-applies `refund_preference.default`.
+      parameters:
+        - in: path
+          name: order_id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RefundActionRequest" }
+      responses:
+        "202":
+          description: Accepted
+        "400":
+          $ref: "#/components/responses/Error"
+        "409":
+          description: REFUND_WINDOW_EXPIRED or REFUND_NOT_PROGRAMMATIC
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+  /providers/refund-capability:
+    get:
+      tags: [Refunds]
+      summary: List providers and their refund mode
+      security: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RefundCapabilityList" }
+  /webhook/resume:
+    post:
+      tags: [Webhooks]
+      summary: Manually resume a paused webhook
+      description: Requires API key with scope `webhook:admin`.
+      responses:
+        "200":
+          description: OK
+        "403":
+          description: SCOPE_REQUIRED
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+  /me:
+    get:
+      tags: [Partner]
+      summary: Get partner profile and aggregate stats
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PartnerProfile" }
+  /me/orders:
+    get:
+      tags: [Partner]
+      summary: List partner orders
+      parameters:
+        - in: query
+          name: from
+          schema: { type: string, format: date }
+        - in: query
+          name: to
+          schema: { type: string, format: date }
+        - in: query
+          name: status
+          schema: { type: string }
+        - in: query
+          name: page
+          schema: { type: integer, default: 1 }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  page: { type: integer }
+                  total: { type: integer }
+                  items:
+                    type: array
+                    items: { $ref: "#/components/schemas/Order" }
+  /health:
+    get:
+      tags: [Health]
+      summary: Uptime probe endpoint
+      security: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, example: ok }
+                  ts: { type: string, format: date-time }
+components:
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: Partner API key issued in the dashboard. Use `pk_live_...` in production, `pk_test_...` against sandbox.
+  schemas:
+    Currency:
+      type: object
+      properties:
+        code: { type: string, example: BTC }
+        name: { type: string, example: Bitcoin }
+        networks:
+          type: array
+          items: { type: string }
+          example: [btc]
+        has_extra_id: { type: boolean }
+        image:
+          type: object
+          properties:
+            primary: { type: string, format: uri }
+            fallback: { type: string, format: uri }
+            data_uri: { type: string }
+    Pair:
+      type: object
+      properties:
+        from: { type: string }
+        to: { type: string }
+        from_network: { type: string }
+        to_network: { type: string }
+        fixed_rate_available: { type: boolean }
+    Estimate:
+      type: object
+      properties:
+        from: { type: string }
+        to: { type: string }
+        amount_from: { type: string }
+        amount_to: { type: string }
+        rate: { type: string }
+        provider: { type: string, example: exolix }
+        eta_seconds: { type: integer, example: 1800 }
+        quote_id: { type: string }
+        expires_at: { type: string, format: date-time }
+        markup_applied_bps: { type: integer }
+        warnings:
+          type: array
+          items: { type: string }
+    RefundPreference:
+      type: object
+      properties:
+        default:
+          type: string
+          enum: [return_to_refund_address, convert_to_stable]
+          default: return_to_refund_address
+        fallback_if_refund_address_missing:
+          type: string
+          enum: [manual_review, convert_to_stable]
+          default: manual_review
+        convert_to_stable_target:
+          type: string
+          nullable: true
+          enum: [USDT-TRC20, USDT-ERC20, USDC-ERC20, USDC-SOL, null]
+    CreateOrderRequest:
+      type: object
+      required: [quote_id, address]
+      properties:
+        quote_id: { type: string }
+        address: { type: string, description: Payout address. }
+        extra_id: { type: string, nullable: true, description: Memo for XRP/XLM/TON. }
+        refund_address: { type: string, nullable: true }
+        refund_extra_id: { type: string, nullable: true }
+        refund_preference: { $ref: "#/components/schemas/RefundPreference" }
+        partner_order_ref:
+          type: string
+          description: Your internal id. Returned back in webhooks. Used for logical-dupe detection.
+    Order:
+      type: object
+      properties:
+        order_id: { type: string, example: prv-9f0e... }
+        provider_order_id: { type: string }
+        from: { type: string }
+        to: { type: string }
+        amount_from: { type: string }
+        amount_to_expected: { type: string }
+        amount_to_actual: { type: string, nullable: true }
+        deposit_address: { type: string }
+        deposit_extra_id: { type: string, nullable: true }
+        payout_address: { type: string }
+        status:
+          type: string
+          enum:
+            - waiting_deposit
+            - confirming
+            - exchanging
+            - sending
+            - completed
+            - failed
+            - expired
+            - refund_required
+            - refunded
+            - manual_review
+        failed_reason_code:
+          type: string
+          nullable: true
+          enum:
+            - kyt_block
+            - amount_out_of_range
+            - rate_changed
+            - provider_timeout
+            - provider_internal
+            - underpayment
+            - overpayment
+            - network_congestion
+            - unknown
+        failed_reason_message: { type: string, nullable: true }
+        refund_capability:
+          type: string
+          enum: [programmatic, ticket, none]
+        refund_window_hours: { type: integer, nullable: true }
+        refund_sla_hours: { type: integer, nullable: true }
+        tx_in_hash: { type: string, nullable: true }
+        tx_out_hash: { type: string, nullable: true }
+        expires_at: { type: string, format: date-time }
+        created_at: { type: string, format: date-time }
+        tracking_url:
+          type: string
+          format: uri
+          description: Signed URL with embedded HMAC token. Do not modify.
+        timeline:
+          type: array
+          items:
+            type: object
+            properties:
+              status: { type: string }
+              at: { type: string, format: date-time }
+    RefundActionRequest:
+      type: object
+      required: [action]
+      properties:
+        action:
+          type: string
+          enum: [refund_to_address, convert_to_stable]
+        stable_target:
+          type: string
+          nullable: true
+          enum: [USDT-TRC20, USDT-ERC20, USDC-ERC20, USDC-SOL, null]
+          description: Required when action=convert_to_stable.
+    RefundCapabilityList:
+      type: object
+      properties:
+        providers:
+          type: array
+          items:
+            type: object
+            properties:
+              code: { type: string }
+              refund_mode:
+                type: string
+                enum: [programmatic, ticket, none]
+              window_hours: { type: integer, nullable: true }
+              sla_hours: { type: integer, nullable: true }
+              fee_pct: { type: number, nullable: true }
+              fee_network: { type: boolean, nullable: true }
+        updated_at: { type: string, format: date-time }
+    PartnerProfile:
+      type: object
+      properties:
+        partner_id: { type: string }
+        name: { type: string }
+        created_at: { type: string, format: date-time }
+        stats:
+          type: object
+          properties:
+            orders_total: { type: integer }
+            orders_completed: { type: integer }
+            volume_usd: { type: number }
+            revenue_share_pct: { type: integer }
+            earnings_pending_usd: { type: number }
+            earnings_paid_usd: { type: number }
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              enum:
+                - INVALID_KEY
+                - RATE_LIMITED
+                - INVALID_PAIR
+                - AMOUNT_TOO_LOW
+                - AMOUNT_TOO_HIGH
+                - NO_PROVIDERS_AVAILABLE
+                - PROVIDER_ERROR
+                - QUOTE_EXPIRED
+                - ORDER_NOT_FOUND
+                - DUPLICATE_ACTIVE_ORDER
+                - REFUND_WINDOW_EXPIRED
+                - REFUND_NOT_PROGRAMMATIC
+                - STABLE_TARGET_REQUIRED
+                - WEBHOOK_PAUSED
+                - SCOPE_REQUIRED
+            message: { type: string }
+            request_id: { type: string }
+  responses:
+    Error:
+      description: Error response
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+webhooks:
+  order.event:
+    post:
+      summary: Order lifecycle event
+      description: |
+        Sent to your registered webhook URL on every order status change.
+        Signed with HMAC-SHA256 using your webhook secret in header `X-Privata-Signature`.
+        Body includes a deterministic `event_id` used for deduplication.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                event:
+                  type: string
+                  enum:
+                    - order.waiting_deposit
+                    - order.confirming
+                    - order.exchanging
+                    - order.sending
+                    - order.completed
+                    - order.failed
+                    - order.expired
+                    - order.refund_required
+                    - order.refunded
+                    - order.manual_review
+                event_id: { type: string }
+                order: { $ref: "#/components/schemas/Order" }
+                ts: { type: string, format: date-time }
+      responses:
+        "200":
+          description: Acknowledge with 2xx within 5 s.
+  ops.event:
+    post:
+      summary: Operational event for partner integration
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                event:
+                  type: string
+                  enum:
+                    - webhook_paused
+                    - webhook_resumed
+                    - api_key_locked
+                    - api_key_unlocked
+                    - sla_breach_threshold
+                    - provider_outage_affecting_partner
+                reason: { type: string }
+                paused_at: { type: string, format: date-time, nullable: true }
+                resume_after: { type: string, format: date-time, nullable: true }
+                last_error: { type: string, nullable: true }
+      responses:
+        "200":
+          description: Acknowledge with 2xx within 5 s.

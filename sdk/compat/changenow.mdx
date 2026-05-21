@@ -1,0 +1,77 @@
+---
+title: "ChangeNOW-compatible layer"
+description: "Drop-in for wallet plugins built against ChangeNOW v2."
+---
+
+## Why this exists
+
+Wallets with an existing ChangeNOW integration (Trust, Exodus, Coinomi and
+their forks) can switch to Privata by changing two values:
+
+```diff
+- baseURL: "https://api.changenow.io/v2"
+- apiKey:  "changenow-api-key"
++ baseURL: "https://api.privataswap.com/v2/exchange"
++ apiKey:  "pk_live_..."  // sent as x-changenow-api-key (we accept both names)
+```
+
+No other code changes required for the read flow + order create + order status.
+
+## Endpoints supported
+
+| Method | Path |
+|---|---|
+| GET | `/v2/exchange/currencies?active=true&flow=standard` |
+| GET | `/v2/exchange/min-amount?fromCurrency=&toCurrency=&fromNetwork=&toNetwork=` |
+| GET | `/v2/exchange/estimated-amount?fromCurrency=&toCurrency=&fromAmount=` |
+| POST | `/v2/exchange` (create order) |
+| GET | `/v2/exchange/by-id?id=` |
+
+## Field mapping
+
+We accept ChangeNOW's camelCase wire format on this layer (not the native
+snake_case used in `/partner/v1`).
+
+| ChangeNOW field | Our internal mapping |
+|---|---|
+| `fromCurrency` / `toCurrency` | `from` / `to` |
+| `fromNetwork` / `toNetwork` | `from_network` / `to_network` |
+| `fromAmount` / `toAmount` | `amount_from` / `amount_to_expected` |
+| `payinAddress` | `deposit_address` |
+| `payoutAddress` | `payout_address` |
+| `refundAddress` | `refund_address` |
+
+## Status normalization
+
+The legacy ChangeNOW status `finished` is automatically returned as
+`finished` on this layer (not `completed`) to preserve drop-in compatibility.
+Internally we always store `completed`. New integrations should use the native
+`/partner/v1` surface and follow [our status enum](/guides/order-lifecycle).
+
+## What's not on this layer
+
+These features are exposed only via native `/partner/v1`:
+
+- `refund_preference` / `/refund-action`
+- SSE `/order/{id}/stream`
+- Ops events webhook
+- Tier-aware error codes (`DUPLICATE_ACTIVE_ORDER`, `REFUND_WINDOW_EXPIRED`, etc.)
+
+If your wallet needs any of these, migrate the integration to native v1 — the
+JS SDK does it for you.
+
+## Authentication header
+
+We accept either header on `/v2/exchange/*`:
+
+```http
+x-changenow-api-key: pk_live_...
+```
+
+or:
+
+```http
+X-API-Key: pk_live_...
+```
+
+Both work; pick whichever is easier to set in your existing client.

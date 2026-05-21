@@ -1,55 +1,59 @@
-# Mintlify Starter Kit
+# Privata Docs
 
-Use the starter kit to get your docs deployed and ready to customize.
+Источник правды для `docs.privataswap.com`. Mintlify, docs-as-code.
 
-Click the green **Use this template** button at the top of this repo to copy the Mintlify starter kit. The starter kit contains examples with
+## Структура
 
-- Guide pages
-- Navigation
-- Customizations
-- API reference pages
-- Use of popular components
+```
+privata-docs/
+├── docs.json                    # конфиг Mintlify (theme, nav, footer)
+├── index.mdx                    # главная
+├── api-reference/
+│   └── openapi.yaml             # OpenAPI 3.1 → автогенерация Reference + playground
+├── guides/
+│   ├── quickstart.mdx
+│   ├── authentication.mdx
+│   ├── order-lifecycle.mdx
+│   ├── refund-flow.mdx
+│   ├── sse-streaming.mdx
+│   ├── webhooks.mdx
+│   ├── sandbox.mdx
+│   ├── rate-limits.mdx
+│   ├── errors.mdx
+│   ├── sla.mdx
+│   ├── ops-events.mdx
+│   └── changelog.mdx
+├── sdk/
+│   ├── js/{install,quickstart,configuration,errors,streaming}.mdx
+│   └── compat/{changenow,trocador}.mdx
+└── images/{logo-light.svg, logo-dark.svg, favicon.svg}
+```
 
-**[Follow the full quickstart guide](https://starter.mintlify.com/quickstart)**
-
-## AI-assisted writing
-
-Set up your AI coding tool to work with Mintlify:
+## Локальный preview
 
 ```bash
-npx skills add https://mintlify.com/docs
-```
-
-This command installs Mintlify's documentation skill for your configured AI tools like Claude Code, Cursor, Windsurf, and others. The skill includes component reference, writing standards, and workflow guidance.
-
-See the [AI tools guides](/ai-tools) for tool-specific setup.
-
-## Development
-
-Install the [Mintlify CLI](https://www.npmjs.com/package/mint) to preview your documentation changes locally. To install, use the following command:
-
-```
 npm i -g mint
+cd privata-docs
+mint dev          # http://localhost:3000
 ```
 
-Run the following command at the root of your documentation, where your `docs.json` is located:
+## Деплой через Mintlify
 
-```
-mint dev
-```
+1. Залить `privata-docs/` в отдельный GitHub-репо `privataswap/docs` (private OK).
+2. На [mintlify.com/start](https://mintlify.com/start) подключить репо. Mintlify ставит GitHub-App, дальше каждый `git push` в `main` → автодеплой за 30 с.
+3. По умолчанию сайт на `https://privata.mintlify.app`. Кастомный домен:
+   - В dashboard.mintlify.com → Settings → Custom domain → `docs.privataswap.com`.
+   - На Cloudflare добавить CNAME `docs` → `cname.mintlify.app` (proxied off).
+   - SSL Mintlify выписывает сам, 5-10 минут.
 
-View your local preview at `http://localhost:3000`.
+## Обновление OpenAPI
 
-## Publishing changes
+Когда меняется `privata_wallet_api_spec.md` в основном репо:
+1. Регенерировать `api-reference/openapi.yaml`.
+2. PR в `privataswap/docs`.
+3. Mintlify деплоит, playground обновляется автоматически.
 
-Install our GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app) to propagate changes from your repo to your deployment. Changes are deployed to production automatically after pushing to the default branch.
+## Что вынести из репо v3
 
-## Need help?
-
-### Troubleshooting
-
-- If your dev environment isn't running: Run `mint update` to ensure you have the most recent version of the CLI.
-- If a page loads as a 404: Make sure you are running in a folder with a valid `docs.json`.
-
-### Resources
-- [Mintlify documentation](https://mintlify.com/docs)
+- Логотипы из `privata-v3/client/public/` если есть финальные SVG.
+- Цвета `colors.primary/light/dark` уже синхронизированы с brand-kit.

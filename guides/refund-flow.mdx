@@ -1,0 +1,90 @@
+---
+title: "Refund flow"
+description: "How refund_required resolves and what UX to ship."
+---
+
+## Two refund modes
+
+| Mode | Providers | Behaviour |
+|---|---|---|
+| **`programmatic`** | Exolix, ChangeNOW, FixedFloat, SimpleSwap, Godex | We call the provider API on your behalf. Resolves within `refund_window_hours`. |
+| **`ticket`** | Trocador and 22 others | Provider opens an internal ticket. SLA `refund_sla_hours` (24-72 h typical). |
+
+Query the live list at `GET /partner/v1/providers/refund-capability`.
+We refresh this monthly.
+
+## Per-order capability
+
+Every `/order/create` response carries:
+
+```json
+{
+  "refund_capability": "programmatic",
+  "refund_window_hours": 24,
+  "refund_sla_hours": null
+}
+```
+
+Use this **before** the order enters `refund_required` to choose your UX:
+
+- `programmatic` → show "Refund now" button when the order hits `refund_required`.
+- `ticket` → show "Refund requested, takes up to 72 h. Provider: {code}." Don't show a button.
+
+## Setting partner preferences at order creation
+
+```json
+{
+  "refund_address": "bc1q...",
+  "refund_preference": {
+    "default": "return_to_refund_address",
+    "fallback_if_refund_address_missing": "manual_review",
+    "convert_to_stable_target": null
+  }
+}
+```
+
+| Field | Effect |
+|---|---|
+| `default` | What we do if you don't call `/refund-action` within the window. |
+| `fallback_if_refund_address_missing` | If user didn't provide a `refund_address`. Default `manual_review`. |
+| `convert_to_stable_target` | Required if you ever choose `convert_to_stable`. We never auto-convert without this. |
+
+<Warning>
+Auto-conversion to a stable without explicit `convert_to_stable_target` is a
+regulatory issue (no user consent on the destination asset). We refuse it
+on the server side.
+</Warning>
+
+## Confirming the refund
+
+When you get the `order.refund_required` event, call:
+
+```http
+POST /partner/v1/order/{order_id}/refund-action
+Content-Type: application/json
+
+{ "action": "refund_to_address" }
+```
+
+Or:
+
+```json
+{ "action": "convert_to_stable", "stable_target": "USDT-TRC20" }
+```
+
+Must be within `refund_window_hours`. Past the window: `409 REFUND_WINDOW_EXPIRED`
+and the server applies the `default` you set at order creation.
+
+## What happens after
+
+A `refunded` webhook event fires with `tx_out_hash` pointing at the refund
+transaction. The order is terminal.
+
+## Edge cases
+
+- `refund_capability=none` on a 6th-tier exotic provider — currently zero such
+  providers, but the enum value reserves the slot for future. If you see it,
+  the order can still be refunded via support ticket on `partners@privataswap.com`.
+- Provider goes down mid-refund — we move the order to `manual_review` and our
+  ops team executes manually. You'll get `provider_outage_affecting_partner`
+  on the ops events channel.

@@ -1,0 +1,76 @@
+---
+title: "SSE streaming"
+description: "Resumable Server-Sent Events for order status."
+---
+
+## Endpoint
+
+```http
+GET /partner/v1/order/{order_id}/stream
+Accept: text/event-stream
+X-API-Key: pk_live_...
+```
+
+Returns `text/event-stream`. Heartbeat comment every 15 s. Auto-close on
+terminal status (`completed`, `failed`, `expired`, `refunded`).
+
+## Event format
+
+```
+id: prv-9f0e:confirming:1716293641000
+event: order.confirming
+data: {"order_id":"prv-9f0e...","status":"confirming","ts":"2026-05-21T10:14:01Z"}
+
+```
+
+The id is `<order_id>:<status>:<unix_ms>`. Use it for deduplication if you
+fan-out to multiple consumers.
+
+## Resuming after disconnect
+
+Send `Last-Event-ID` on reconnect. The server has a 60 s in-memory ring buffer
+per order. Response carries:
+
+| Header | Values | Meaning |
+|---|---|---|
+| `Privata-Resume-Source` | `buffer` | Event found in buffer, full replay from there. |
+| `Privata-Resume-Source` | `snapshot` | Event older than buffer (or buffer flushed by restart). Server sends current status, then live. |
+| `Privata-Resume-Source` | `fresh` | No `Last-Event-ID` or first connection. |
+| `Privata-Resume-Gap-Ms` | integer | Only with `snapshot`: age of last known event in ms. |
+
+If you see frequent `snapshot` resumes, your client disconnects last longer
+than 60 s. Either fix your network or accept the snapshot fallback — no data
+is ever lost, only the per-event replay between snapshot and current is.
+
+## Concurrency limits
+
+| Tier | Max concurrent SSE per partner |
+|---|---|
+| Trial | 50 |
+| Starter | 200 |
+| Growth | 500 |
+| Scale | 1,500 |
+| Enterprise | by contract |
+
+Above the cap: `429 RATE_LIMITED` on connect. One SSE counts as one read in
+the 30-second-per-read bucket.
+
+## SDK helper
+
+```ts
+const stream = privata.streamOrder(orderId);
+stream.on("status", (e) => console.log(e.status));
+stream.on("resume", (source, gapMs) => console.log("resumed via", source, gapMs));
+stream.on("error", (err) => console.error(err));
+
+for await (const event of stream) {
+  if (["completed", "failed", "expired", "refunded"].includes(event.status)) {
+    stream.close();
+    break;
+  }
+}
+```
+
+The SDK reconnects with `Last-Event-ID` and exponential backoff (1s, 2s, 5s,
+15s, then capped at 30s). After 5 consecutive failed reconnects, it falls
+back to polling `GET /order/{id}` every 10 s and emits a `degraded` event.
