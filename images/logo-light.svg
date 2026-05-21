@@ -1,87 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 500" width="1500" height="500" role="img" aria-label="Privata - Private swaps. Privacy by design.">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 80" role="img" aria-label="Privata">
   <defs>
-    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#F7F4FB" />
-      <stop offset="100%" stop-color="#EDE6F5" />
+    <linearGradient id="markGradL" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#9B7BFF"/>
+      <stop offset="100%" stop-color="#5B3FD1"/>
     </linearGradient>
-    <radialGradient id="logoGrad" cx="30%" cy="30%" r="80%">
-      <stop offset="0%" stop-color="hsl(270, 80%, 70%)" />
-      <stop offset="100%" stop-color="hsl(280, 75%, 28%)" />
-    </radialGradient>
-    <radialGradient id="glow1" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="hsl(272, 85%, 65%)" stop-opacity="0.18" />
-      <stop offset="100%" stop-color="hsl(272, 85%, 65%)" stop-opacity="0" />
-    </radialGradient>
-    <radialGradient id="glow2" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="hsl(290, 90%, 70%)" stop-opacity="0.14" />
-      <stop offset="100%" stop-color="hsl(290, 90%, 70%)" stop-opacity="0" />
-    </radialGradient>
-    <pattern id="dotGrid" x="0" y="0" width="32" height="32" patternUnits="userSpaceOnUse">
-      <circle cx="1.5" cy="1.5" r="1.2" fill="hsl(272, 30%, 50%)" fill-opacity="0.08" />
-    </pattern>
-    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur stdDeviation="14" />
-      <feOffset dx="0" dy="10" result="shadow" />
-      <feComposite in="SourceGraphic" in2="shadow" operator="over" />
-    </filter>
-    <filter id="logoShadow" x="-30%" y="-30%" width="160%" height="160%">
-      <feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="hsl(272, 70%, 30%)" flood-opacity="0.22" />
-    </filter>
   </defs>
-
-  <!-- Background -->
-  <rect width="1500" height="500" fill="url(#bgGrad)" />
-  <rect width="1500" height="500" fill="url(#dotGrid)" />
-
-  <!-- Decorative glows -->
-  <circle cx="220" cy="260" r="360" fill="url(#glow1)" />
-  <circle cx="1320" cy="240" r="320" fill="url(#glow2)" />
-
-  <!-- Logo mark: rounded square + P, sized 200x200, positioned left-center -->
-  <g transform="translate(220, 150)" filter="url(#logoShadow)">
-    <rect x="0" y="0" width="200" height="200" rx="50" fill="url(#logoGrad)" />
-    <!-- P glyph, drawn relative to a 100x100 viewBox scaled to 200 -->
-    <path
-      d="M 64 44 L 64 156 L 84 156 L 84 116 L 120 116 Q 156 116 156 80 Q 156 44 120 44 Z M 84 64 L 120 64 Q 136 64 136 80 Q 136 96 120 96 L 84 96 Z"
-      fill="white"
-      fill-rule="evenodd"
-    />
-  </g>
-
-  <!-- Wordmark + tagline -->
-  <g transform="translate(470, 180)">
-    <text
-      x="0"
-      y="80"
-      font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif"
-      font-size="120"
-      font-weight="800"
-      letter-spacing="-3"
-      fill="hsl(272, 65%, 22%)"
-    >Privata</text>
-    <text
-      x="6"
-      y="138"
-      font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif"
-      font-size="28"
-      font-weight="500"
-      letter-spacing="0.4"
-      fill="hsl(272, 30%, 38%)"
-    >Private swaps. Privacy by design.</text>
-    <!-- accent line -->
-    <rect x="6" y="170" width="64" height="4" rx="2" fill="hsl(272, 85%, 55%)" />
-  </g>
-
-  <!-- Bottom-right discreet domain -->
-  <text
-    x="1452"
-    y="458"
-    text-anchor="end"
-    font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif"
-    font-size="20"
-    font-weight="500"
-    letter-spacing="1"
-    fill="hsl(272, 30%, 38%)"
-    fill-opacity="0.72"
-  >privataswap.com</text>
+  <rect x="8" y="8" width="64" height="64" rx="16" fill="url(#markGradL)"/>
+  <path d="M28 26 h18 a12 12 0 0 1 0 24 h-8 v10 h-10 z M38 34 v10 h7 a4 4 0 0 0 0 -8 h-7 z" fill="#FFFFFF"/>
+  <text x="88" y="52" font-family="Inter,system-ui,-apple-system,sans-serif" font-size="34" font-weight="700" fill="#0A0A12" letter-spacing="-0.5">Privata</text>
 </svg>
