@@ -5,9 +5,9 @@
       <stop offset="100%" stop-color="hsl(280, 75%, 28%)"/>
     </radialGradient>
   </defs>
-  <g transform="translate(8,10)">
-    <rect x="6" y="6" width="88" height="88" rx="22" fill="url(#pMark)"/>
-    <path d="M 32 22 L 32 78 L 42 78 L 42 58 L 60 58 Q 78 58 78 40 Q 78 22 60 22 Z M 42 32 L 60 32 Q 68 32 68 40 Q 68 48 60 48 L 42 48 Z" fill="#FFFFFF" fill-rule="evenodd"/>
+  <g transform="translate(8,18)">
+    <rect x="0" y="0" width="64" height="64" rx="16" fill="url(#pMark)"/>
+    <path d="M 21 14 L 21 50 L 27 50 L 27 38 L 38 38 Q 50 38 50 26 Q 50 14 38 14 Z M 27 20 L 38 20 Q 44 20 44 26 Q 44 32 38 32 L 27 32 Z" fill="#FFFFFF" fill-rule="evenodd"/>
   </g>
-  <text x="118" y="68" font-family="Inter,system-ui,-apple-system,sans-serif" font-size="48" font-weight="700" fill="#0A0A12" letter-spacing="-1">Privata</text>
+  <text x="86" y="64" font-family="Inter,system-ui,-apple-system,sans-serif" font-size="40" font-weight="700" fill="#0A0A12" letter-spacing="-1">Privata</text>
 </svg>
