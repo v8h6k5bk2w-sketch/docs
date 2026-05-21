@@ -1,4 +1,4 @@
-# Privata Partner Dashboard — Product + Technical Specification
+# Privata Partner Dashboard - Product + Technical Specification
 
 **Version:** 1.0  
 **Status:** Draft for internal review  
@@ -28,15 +28,15 @@
 
 ## 1. Product Overview
 
-The Privata Partner Dashboard (`dashboard.privataswap.com`) is the self-service control plane for B2B partners — crypto wallets, CEX integrations, and payment applications — who embed the Privata swap aggregator via `api.privataswap.com/partner/v1`. It provides a single authenticated surface for API credential management, webhook configuration, live order monitoring, revenue tracking, SLA observability, team administration, and billing, eliminating the need for email-based onboarding and manual back-office intervention for routine partner operations.
+The Privata Partner Dashboard (`dashboard.privataswap.com`) is the self-service control plane for B2B partners (crypto wallets, CEX integrations, and payment applications) who embed the Privata swap aggregator via `api.privataswap.com/partner/v1`. It provides a single authenticated surface for API credential management, webhook configuration, live order monitoring, revenue tracking, SLA observability, team administration, and billing, eliminating the need for email-based onboarding and manual back-office intervention for routine partner operations.
 
 **Five key user jobs-to-be-done:**
 
-1. **Provision and rotate credentials safely.** A developer needs to issue a scoped API key, restrict it to specific IP ranges, and rotate it in under five minutes without downtime to their integration — relying on the documented dual-sign grace window (see [Authentication](/guides/authentication)).
-2. **Diagnose a failed or stuck order.** A support engineer needs to find a specific order by ID or customer reference, inspect its full event timeline, see the raw webhook delivery attempts and response codes, and trigger a manual refund-action — without requiring Privata back-office involvement.
-3. **Monitor integration health in real time.** A technical lead needs a live view of orders per minute, success rate, provider routing distribution, webhook delivery error rate, and SSE stream concurrency against the cap — all on one screen, refreshing without a page reload.
-4. **Track and withdraw revenue.** A finance role needs to see pending and paid rev-share earnings broken down by period, configure a verified payout address, and initiate a payout with HMAC-confirmed withdrawal — without access to API keys or order internals.
-5. **Onboard additional team members with least-privilege roles.** An Owner needs to invite a Finance user, a Developer, and a Read-only auditor, each receiving only the permissions their role requires — without sharing credentials.
+1. **Provision and rotate credentials safely.** A developer needs to issue a scoped API key, restrict it to specific IP ranges, and rotate it in under five minutes without downtime to their integration, relying on the documented dual-sign grace window (see [Authentication](/guides/authentication)).
+2. **Diagnose a failed or stuck order.** A support engineer needs to find a specific order by ID or customer reference, inspect its full event timeline, see the raw webhook delivery attempts and response codes, and trigger a manual refund-action - without requiring Privata back-office involvement.
+3. **Monitor integration health in real time.** A technical lead needs a live view of orders per minute, success rate, provider routing distribution, webhook delivery error rate, and SSE stream concurrency against the cap - all on one screen, refreshing without a page reload.
+4. **Track and withdraw revenue.** A finance role needs to see pending and paid rev-share earnings broken down by period, configure a verified payout address, and initiate a payout with HMAC-confirmed withdrawal - without access to API keys or order internals.
+5. **Onboard additional team members with least-privilege roles.** An Owner needs to invite a Finance user, a Developer, and a Read-only auditor, each receiving only the permissions their role requires - without sharing credentials.
 
 ---
 
@@ -48,22 +48,20 @@ The Privata Partner Dashboard (`dashboard.privataswap.com`) is the self-service 
 dashboard.privataswap.com/
 │
 ├── /auth/
-│   ├── /signup                      – Email + password or magic-link registration
-│   ├── /login                       – Password or magic-link login
-│   ├── /login/2fa                   – TOTP or WebAuthn challenge
-│   ├── /login/sso                   – Enterprise SSO / SAML redirect (WorkOS)
-│   ├── /password-reset              – Request reset link
-│   ├── /password-reset/confirm      – Set new password via token
-│   └── /magic-link/verify           – Consume magic-link token (GET)
+│   ├── /signup                      - Email + password registration
+│   ├── /login                       - Email + password login
+│   ├── /login/2fa                   - TOTP or WebAuthn challenge
+│   ├── /password-reset              - Request reset link
+│   └── /password-reset/confirm      - Set new password via token
 │
-├── /onboarding/                     – Gated until complete; redirects new org on first login
-│   ├── /company                     – Legal name, country, business type, website
-│   ├── /volume                      – Intended monthly order volume, primary use-case
-│   ├── /jurisdictions               – Countries of operation; AML checkbox consent
-│   ├── /technical                   – Technical contact email; preferred integration (REST/SDK/ChangeNOW compat)
-│   └── /done                        – Confirmation screen; auto-issue test key; prompt to quickstart docs
+├── /onboarding/                     - Gated until complete; redirects new org on first login
+│   ├── /organization                - Organization name, business email, jurisdiction
+│   ├── /volume                      - Intended monthly swap volume (USD range)
+│   ├── /use-case                    - Integration use case (free text)
+│   ├── /terms                       - Accept Partner Terms
+│   └── /done                        - Confirmation screen; auto-issue test key; prompt to quickstart docs
 │
-├── /                                – Home Dashboard (default after auth + onboarding)
+├── /                                - Home Dashboard (default after auth + onboarding)
 │   ├── KPI strip: orders today, 24h volume (USD), success rate, avg latency (p50/p99), top provider
 │   ├── Mini chart: orders / hour (rolling 24h)
 │   ├── Recent webhook deliveries widget (last 10, status badge)
@@ -72,29 +70,29 @@ dashboard.privataswap.com/
 │   └── Quick-action shortcuts: Create API key, Configure webhook, View orders
 │
 ├── /api-keys/
-│   ├── /                            – List: live keys, test keys; prefix, scopes, last_used_at, status
-│   ├── /new                         – Create key modal: name, environment, scopes, IP allowlist
-│   ├── /[key_id]/                   – Key detail
-│   │   ├── /edit                    – Edit scopes, IP allowlist, expiry
-│   │   └── /rotate                  – Rotation wizard: dual-sign grace countdown
-│   └── /[key_id]/revoke             – Confirmation modal
+│   ├── /                            - List: live keys, test keys; prefix, scopes, last_used_at, status
+│   ├── /new                         - Create key modal: name, environment, scopes, IP allowlist
+│   ├── /[key_id]/                   - Key detail
+│   │   ├── /edit                    - Edit scopes, IP allowlist, expiry
+│   │   └── /rotate                  - Rotation wizard: dual-sign grace countdown
+│   └── /[key_id]/revoke             - Confirmation modal
 │
 ├── /webhooks/
-│   ├── /                            – Endpoints list (Order URL, Ops URL); status badges
-│   ├── /new                         – Add endpoint: URL, type (order/ops), events filter
+│   ├── /                            - Endpoints list (Order URL, Ops URL); status badges
+│   ├── /new                         - Add endpoint: URL, type (order/ops), events filter
 │   ├── /[endpoint_id]/
-│   │   ├── /edit                    – URL, secret rotation button, events filter
-│   │   ├── /secret                  – View masked secret; rotate modal with grace countdown
-│   │   └── /deliveries/             – Delivery log: filter by event, status, date
-│   │       └── /[delivery_id]/      – Delivery detail: request headers, body, response code, response excerpt; Retry / Replay buttons
-│   └── /resume                      – One-click resume for a paused endpoint (calls POST /partner/v1/webhook/resume)
+│   │   ├── /edit                    - URL, secret rotation button, events filter
+│   │   ├── /secret                  - View masked secret; rotate modal with grace countdown
+│   │   └── /deliveries/             - Delivery log: filter by event, status, date
+│   │       └── /[delivery_id]/      - Delivery detail: request headers, body, response code, response excerpt; Retry / Replay buttons
+│   └── /resume                      - One-click resume for a paused endpoint (calls POST /partner/v1/webhook/resume)
 │
 ├── /sse/
-│   └── /                            – Active stream list: order_id, connected_at, client_ip (hashed); concurrency gauge vs. cap
+│   └── /                            - Active stream list: order_id, connected_at, client_ip (hashed); concurrency gauge vs. cap
 │
 ├── /orders/
-│   ├── /                            – Search + filter table; export CSV
-│   └── /[order_id]/                 – Order detail
+│   ├── /                            - Search + filter table; export CSV
+│   └── /[order_id]/                 - Order detail
 │       ├── Summary card (pair, amounts, provider, status badge)
 │       ├── Event timeline (all status transitions + timestamps)
 │       ├── Deposit + payout tx hashes (block explorer links)
@@ -103,39 +101,37 @@ dashboard.privataswap.com/
 │       └── Raw JSON tab (full order object from API)
 │
 ├── /providers/
-│   └── /                            – Provider grid: enable/disable toggle, fee config, refund capability badge (programmatic/ticket/none), window_hours
+│   └── /                            - Provider grid: enable/disable toggle, fee config, refund capability badge (programmatic/ticket/none), window_hours
 │
 ├── /revenue/
-│   ├── /                            – Earnings overview: pending balance, paid to date, rev-share %, markup earnings
-│   ├── /history                     – Payout history table: amount, currency, tx_hash, date, status
+│   ├── /                            - Earnings overview: pending balance, paid to date, rev-share %, markup earnings
+│   ├── /history                     - Payout history table: amount, currency, tx_hash, date, status
 │   └── /payouts/
-│       ├── /addresses               – Payout address management: add, verify, set default
-│       └── /request                 – Manual payout request (min threshold); HMAC-signed confirmation step
+│       ├── /addresses               - Payout address management: add, verify, set default
+│       └── /request                 - Manual payout request (min threshold); HMAC-signed confirmation step
 │
 ├── /sla/
-│   └── /                            – Live uptime vs. tier target; compensation accrual this month; breach incidents log; prober config helper
+│   └── /                            - Live uptime vs. tier target; compensation accrual this month; breach incidents log; prober config helper
 │
 ├── /team/
-│   ├── /                            – Members list: name, email, role, last_login, status
-│   ├── /invite                      – Invite by email: select role
-│   ├── /[member_id]/edit            – Change role, deactivate
-│   └── /sso                         – Enterprise SSO / SAML config (WorkOS connection wizard)
+│   ├── /                            - Members list: name, email, role, last_login, status
+│   ├── /invite                      - Invite by email: select role
+│   └── /[member_id]/edit            - Change role, deactivate
 │
 ├── /audit-log/
-│   └── /                            – Immutable action log: actor, action, target, IP, timestamp; filter + export
+│   └── /                            - Immutable action log: actor, action, target, IP, timestamp; filter + export
 │
 ├── /billing/
-│   ├── /                            – Current plan (rev-share or Enterprise tier), usage this period
-│   ├── /upgrade                     – Plan comparison; upgrade to Enterprise
-│   └── /invoices                    – Invoice list + PDF download (Stripe Customer Portal iframe or redirect)
+│   ├── /                            - Current plan tier (Starter/Pro/Enterprise), revenue summary, payout config
+│   └── /upgrade                     - Plan comparison; upgrade to Enterprise (contact partners@privataswap.com)
 │
 ├── /settings/
-│   ├── /organization                – Org name, logo (for branded partner pages), timezone
-│   ├── /security                    – 2FA enrollment (TOTP, WebAuthn); session list; new-device email preference
-│   ├── /tokens                      – Scoped personal access tokens (for CI/CD, separate from org API keys)
-│   └── /webhook-ip-allowlist        – IP ranges allowed to receive webhook deliveries (outbound filter bypass)
+│   ├── /organization                - Org name, logo (for branded partner pages), timezone
+│   ├── /security                    - 2FA enrollment (TOTP, WebAuthn); session list; new-device email preference
+│   ├── /tokens                      - Scoped personal access tokens (for CI/CD, separate from org API keys)
+│   └── /webhook-ip-allowlist        - IP ranges allowed to receive webhook deliveries (outbound filter bypass)
 │
-└── /docs/                           – Shortcut redirect to docs.privataswap.com; contextual deep-links per section
+└── /docs/                           - Shortcut redirect to docs.privataswap.com; contextual deep-links per section
 ```
 
 ---
@@ -147,36 +143,34 @@ Roles are scoped per organization. A user may belong to multiple organizations w
 | Permission | Owner | Admin | Developer | Finance | Read-only |
 |---|:---:|:---:|:---:|:---:|:---:|
 | View home dashboard | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Complete onboarding | ✓ | ✓ | — | — | — |
-| Create / revoke API keys | ✓ | ✓ | ✓ | — | — |
-| View API key prefixes | ✓ | ✓ | ✓ | — | ✓ |
-| View full API key secret (once, on create) | ✓ | ✓ | ✓ | — | — |
-| Edit API key scopes / IP allowlist | ✓ | ✓ | ✓ | — | — |
-| Rotate API key | ✓ | ✓ | ✓ | — | — |
-| Configure webhook endpoints | ✓ | ✓ | ✓ | — | — |
-| View webhook delivery log | ✓ | ✓ | ✓ | — | ✓ |
-| Replay / retry webhook delivery | ✓ | ✓ | ✓ | — | — |
-| Resume paused webhook | ✓ | ✓ | ✓ | — | — |
-| View SSE stream list | ✓ | ✓ | ✓ | — | ✓ |
+| Complete onboarding | ✓ | ✓ | - | - | - |
+| Create / revoke API keys | ✓ | ✓ | ✓ | - | - |
+| View API key prefixes | ✓ | ✓ | ✓ | - | ✓ |
+| View full API key secret (once, on create) | ✓ | ✓ | ✓ | - | - |
+| Edit API key scopes / IP allowlist | ✓ | ✓ | ✓ | - | - |
+| Rotate API key | ✓ | ✓ | ✓ | - | - |
+| Configure webhook endpoints | ✓ | ✓ | ✓ | - | - |
+| View webhook delivery log | ✓ | ✓ | ✓ | - | ✓ |
+| Replay / retry webhook delivery | ✓ | ✓ | ✓ | - | - |
+| Resume paused webhook | ✓ | ✓ | ✓ | - | - |
+| View SSE stream list | ✓ | ✓ | ✓ | - | ✓ |
 | Search / view orders | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Export orders CSV | ✓ | ✓ | ✓ | ✓ | — |
-| Trigger refund action | ✓ | ✓ | ✓ | — | — |
-| Enable / disable providers | ✓ | ✓ | — | — | — |
-| Edit provider fee config | ✓ | ✓ | — | — | — |
-| View revenue / earnings | ✓ | ✓ | — | ✓ | — |
-| Manage payout addresses | ✓ | — | — | ✓ | — |
-| Initiate payout request | ✓ | — | — | ✓ | — |
+| Export orders CSV | ✓ | ✓ | ✓ | ✓ | - |
+| Trigger refund action | ✓ | ✓ | ✓ | - | - |
+| Enable / disable providers | ✓ | ✓ | - | - | - |
+| Edit provider fee config | ✓ | ✓ | - | - | - |
+| View revenue / earnings | ✓ | ✓ | - | ✓ | - |
+| Manage payout addresses | ✓ | - | - | ✓ | - |
+| Initiate payout request | ✓ | - | - | ✓ | - |
 | View SLA page | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Invite team members | ✓ | ✓ | — | — | — |
-| Change member roles | ✓ | ✓ | — | — | — |
-| Remove members | ✓ | — | — | — | — |
-| Configure enterprise SSO | ✓ | — | — | — | — |
-| View audit log | ✓ | ✓ | — | ✓ | — |
-| Export audit log | ✓ | ✓ | — | — | — |
-| Manage billing / upgrade plan | ✓ | — | — | — | — |
-| View invoices | ✓ | ✓ | — | ✓ | — |
-| Edit organization settings | ✓ | ✓ | — | — | — |
-| Configure GDPR data export / delete | ✓ | — | — | — | — |
+| Invite team members | ✓ | ✓ | - | - | - |
+| Change member roles | ✓ | ✓ | - | - | - |
+| Remove members | ✓ | - | - | - | - |
+| View audit log | ✓ | ✓ | - | ✓ | - |
+| Export audit log | ✓ | ✓ | - | - | - |
+| Manage billing / upgrade plan | ✓ | - | - | - | - |
+| Edit organization settings | ✓ | ✓ | - | - | - |
+| Configure GDPR data export / delete | ✓ | - | - | - | - |
 
 **Note:** The Finance role has read access to orders (needed for revenue reconciliation) but cannot see API secrets, trigger refunds, or perform any write operation against the Privata API surface.
 
@@ -186,14 +180,12 @@ Roles are scoped per organization. A user may belong to multiple organizations w
 
 ### 4.1 Auth
 
-**Purpose:** Authenticate dashboard users; enforce 2FA for production access; support enterprise SSO.
+**Purpose:** Authenticate dashboard users; enforce 2FA for production access.
 
 **Primary actions:**
-- Register with email + password, or request a magic-link
+- Register with email + password
 - Log in with email + password + optional TOTP / WebAuthn
-- Log in via enterprise SSO (WorkOS SAML/OIDC)
 - Reset password via email link
-- Consume magic-link (single-use, 15-minute TTL)
 
 **Signup flow:**
 1. Email + password form. Password requirements: min 12 chars, not in HIBP top-10M list (checked client-side against k-anonymity API).
@@ -212,14 +204,11 @@ Roles are scoped per organization. A user may belong to multiple organizations w
 
 **Empty states:**
 - Signup page: clean form with value prop bullet list.
-- Magic-link sent: "Check your email" screen with resend button (shown after 60s).
 
 **Error states:**
 - Invalid credentials: generic "Email or password incorrect" (no user enumeration).
 - TOTP invalid: "Invalid code. Codes refresh every 30 seconds."
 - Account locked after 5 failed 2FA attempts: 30-minute lockout + email notification.
-- Magic-link expired: "This link has expired. Request a new one."
-- SSO config missing: "Your organization has not configured SSO. Contact your administrator."
 
 **Loading states:** Spinner on submit buttons; disable re-submit while in-flight.
 
@@ -227,23 +216,24 @@ Roles are scoped per organization. A user may belong to multiple organizations w
 
 ### 4.2 Onboarding (KYB-lite)
 
-**Purpose:** Collect partner metadata required for AML compliance, capacity planning, and payout setup before issuing a live API key. Completed once per organization; editable from Settings thereafter.
+**Purpose:** Collect partner metadata required for compliance and capacity planning before issuing a live API key. Completed once per organization; editable from Settings thereafter.
 
 **Steps:**
-1. **Company** — Legal name, registered country (dropdown, ISO-3166), business type (Crypto Wallet / CEX / Payment App / Other), public website URL. Required fields; URL must be reachable (background HTTP HEAD check, non-blocking).
-2. **Volume** — Expected monthly order count (5 bands: <100 / 100-1K / 1K-10K / 10K-100K / 100K+), primary currency pairs, integration layer (REST API / JS SDK / ChangeNOW-compat).
-3. **Jurisdictions** — Multi-select of countries where the partner's end-users are located. Checkbox: "I confirm the partner does not serve users in FATF high-risk jurisdictions" (currently: Iran, North Korea, Myanmar — full list maintained server-side). Partner cannot proceed without checking this box.
-4. **Technical contact** — Name, email (pre-filled from signup), Telegram handle (optional). This is the recipient of ops event notifications.
-5. **Done** — Confirmation; test key auto-issued and displayed (once); shortcut to [Quickstart guide](/guides/quickstart).
+1. **Organization** - Organization name, business email, jurisdiction (country dropdown, ISO-3166). Required fields.
+2. **Volume** - Intended monthly swap volume in USD ranges: <$10k, $10k-100k, $100k-1M, $1M-10M, >$10M.
+3. **Use case** - Integration use case (free text, 500 char max).
+4. **Terms** - Accept Partner Terms (checkbox with link). Partner cannot proceed without accepting.
+
+No document upload, no business registration number field. AML and sanctions screening are performed by the underlying swap providers on a per-order basis; the dashboard onboarding only records partner self-attestation.
 
 **Edge cases:**
-- If the jurisdiction checkbox cannot be checked honestly, the flow dead-ends with a "Contact us" screen. Account remains active but no live key is issued.
 - Onboarding can be interrupted and resumed; progress saved per step.
-- Admins can re-open onboarding edit from Settings → Organization.
+- Admins can re-open onboarding edit from Settings - Organization.
+- On completion: test key auto-issued and displayed (once); shortcut to [Quickstart guide](/guides/quickstart).
 
 **Empty state:** Progress stepper visible; initial step pre-selected.
 
-**Error state:** Server validation errors shown inline per field (e.g., "Country is required", "Please select at least one jurisdiction").
+**Error state:** Server validation errors shown inline per field (e.g., "Country is required").
 
 ---
 
@@ -251,7 +241,7 @@ Roles are scoped per organization. A user may belong to multiple organizations w
 
 **Purpose:** Provide an at-a-glance health view of the partner's integration.
 
-**KPI strip (top of page, realtime via Pusher Channels):**
+**KPI strip (top of page, realtime via SSE channel `org:{org_id}:kpis`):**
 
 | Metric | Source | Refresh |
 |---|---|---|
@@ -269,11 +259,11 @@ Roles are scoped per organization. A user may belong to multiple organizations w
 
 **Incident banner:** Shown if `sla_incidents` has an open incident. Links to `/sla`. Dismissible per session.
 
-**Empty state (new partner):** Onboarding checklist widget showing incomplete steps. "No orders yet — send your first test order" with link to Sandbox guide.
+**Empty state (new partner):** Onboarding checklist widget showing incomplete steps. "No orders yet - send your first test order" with link to Sandbox guide.
 
 **Loading state:** KPI strip shows skeleton placeholders. Chart renders with empty axes.
 
-**Error state:** If realtime connection fails, KPI strip shows "Live data unavailable — showing last snapshot from [timestamp]" with manual refresh button.
+**Error state:** If realtime connection fails, KPI strip shows "Live data unavailable - showing last snapshot from [timestamp]" with manual refresh button.
 
 ---
 
@@ -321,7 +311,7 @@ Roles are scoped per organization. A user may belong to multiple organizations w
 **Endpoint list:** Order URL, Ops URL, additional custom endpoints (P1). Columns: alias, URL (truncated), type, status (active / paused / failing), last delivery timestamp, success rate (30d).
 
 **Add endpoint:**
-- URL field: validated for HTTPS scheme, reachable host (non-SSRF — blocked: private RFC-1918 ranges, 169.254.169.254, metadata.google.internal, link-local, cloud metadata endpoints).
+- URL field: validated for HTTPS scheme, reachable host (non-SSRF - blocked: private RFC-1918 ranges, 169.254.169.254, metadata.google.internal, link-local, cloud metadata endpoints).
 - Type: Order events / Ops events.
 - Events filter (P1): select specific event types.
 - On save: secret generated server-side; displayed once in copy modal. Stored encrypted.
@@ -396,11 +386,11 @@ Roles are scoped per organization. A user may belong to multiple organizations w
 
 - **Summary card:** Order ID (copy button), pair, provider name + logo, markup_bps applied, status badge.
 - **Amounts:** `amount_from`, `amount_to_expected`, `amount_to_actual` (null if not completed). Slippage delta shown if actual differs from expected by >0.5%.
-- **Addresses:** deposit_address, deposit_extra_id (if any), payout_address. No refund_address shown (privacy by design — not logged in dashboard).
+- **Addresses:** deposit_address, deposit_extra_id (if any), payout_address. No refund_address shown (privacy by design - not logged in dashboard).
 - **Event timeline:** Vertical list of all status transitions with timestamps. Each entry shows duration since previous state.
 - **Tx hashes:** `tx_in_hash` and `tx_out_hash` with block explorer deep-links (auto-detected by asset type: BTC→mempool.space, ETH→etherscan.io, XMR→xmrchain.net, etc.).
 - **Webhook deliveries (for this order):** Inline table of all deliveries related to this order_id. Link to full delivery detail.
-- **Refund action panel:** Visible only when `status = refund_required` AND `refund_capability = programmatic`. Shows remaining window (countdown timer). Two action buttons: "Refund to Address" and "Convert to Stable." "Convert to Stable" requires selecting a `stable_target`. Confirm dialog before submitting. On submit: calls `POST /partner/v1/order/{id}/refund-action`. Button disabled if window has expired; shows "Refund window expired — order will proceed with default preference."
+- **Refund action panel:** Visible only when `status = refund_required` AND `refund_capability = programmatic`. Shows remaining window (countdown timer). Two action buttons: "Refund to Address" and "Convert to Stable." "Convert to Stable" requires selecting a `stable_target`. Confirm dialog before submitting. On submit: calls `POST /partner/v1/order/{id}/refund-action`. Button disabled if window has expired; shows "Refund window expired - order will proceed with default preference."
 - **Raw JSON tab:** Full order object as returned by the public API. Syntax-highlighted, copyable.
 
 **Empty state:** "No orders match your filters."
@@ -417,7 +407,7 @@ Roles are scoped per organization. A user may belong to multiple organizations w
 
 **Enable/disable:** Toggle immediately applies to new orders routed through best-rate logic. Does not cancel in-flight orders. Confirmation toast on change.
 
-**Fee config (per provider, P1):** Partner can optionally set a per-provider markup override (0–300 bps) in addition to the global markup configured at order time.
+**Fee config (per provider, P1):** Partner can optionally set a per-provider markup override (0-300 bps) in addition to the global markup configured at order time.
 
 **Refund capability matrix:** Read-only data pulled from `GET /providers/refund-capability` (cached hourly). Shows which providers support programmatic refund vs. manual ticket, and the window/fee parameters.
 
@@ -453,7 +443,7 @@ Roles are scoped per organization. A user may belong to multiple organizations w
 3. Enter amount (or "request full balance").
 4. **HMAC confirmation step:** System generates a one-time challenge string. Partner must compute `HMAC-SHA256(webhook_secret, challenge)` and paste the result. This proves the requestor controls the webhook secret, not just the dashboard session. On mismatch: rejected; audit log entry. Alternative for partners without webhook secret: confirmation via email OTP (6-digit, 10-minute TTL).
 5. On successful confirmation: payout job enqueued. Estimated processing time shown (based on asset network).
-6. Finance role can initiate. Owner can initiate. Admin cannot (by design — financial control separation).
+6. Finance role can initiate. Owner can initiate. Admin cannot (by design - financial control separation).
 
 **Edge case:** If pending balance < threshold: button shown but disabled with tooltip showing current balance and threshold.
 
@@ -475,7 +465,7 @@ Roles are scoped per organization. A user may belong to multiple organizations w
 
 **Empty state (no incidents):** "No incidents recorded. Your integration is healthy."
 
-**Error state:** If uptime data unavailable: "Uptime data is syncing — check back in a few minutes."
+**Error state:** If uptime data unavailable: "Uptime data is syncing - check back in a few minutes."
 
 ---
 
@@ -491,8 +481,6 @@ Roles are scoped per organization. A user may belong to multiple organizations w
 
 **Remove:** Owner only. Shows confirmation "This will immediately revoke all of [name]'s access." If the removed user has active sessions, those sessions are invalidated immediately.
 
-**Enterprise SSO (Owner only):** WorkOS connection wizard embedded in `/team/sso`. Supports SAML 2.0 and OIDC. Once configured: login page shows "Login with [Company SSO]" button. Domain-matched email addresses are forced through SSO. Directory sync (SCIM) for automated provisioning (P2).
-
 **Edge case:** Attempting to remove the last Owner: blocked with "You cannot remove the last Owner. Promote another member first."
 
 ---
@@ -507,7 +495,7 @@ Roles are scoped per organization. A user may belong to multiple organizations w
 
 **Export:** NDJSON or CSV. Exports are themselves logged (`audit_log.exported`).
 
-**Integrity:** Each row has a `prev_hash` field forming an append-only hash chain (SHA-256 of previous row's hash + current row content). The chain head is periodically signed and stored in a separate table for tamper detection. Verification endpoint (internal admin only) walks the chain and reports any break.
+**Integrity:** The table is append-only; the `dashboard_app` Postgres role has `INSERT, SELECT` only. See §5.9 for the full integrity model.
 
 **Retention:** 2 years online in Postgres, then archived to cold storage (S3 Glacier or equivalent). Soft-delete is not available for audit records.
 
@@ -517,16 +505,18 @@ Roles are scoped per organization. A user may belong to multiple organizations w
 
 ### 4.13 Billing
 
-**Purpose:** Manage subscription plan and access Stripe-generated invoices.
+**Purpose:** Display current plan tier and provide self-service payout configuration. Plan changes are sales-assisted.
 
-**Current plan panel:** Plan name (Revenue Share Free / Enterprise $2,500 / Enterprise $3,500), cycle start, usage this period (orders count, volume USD, rev-share earned).
+**Current plan panel:** Plan tier (Starter / Pro / Enterprise) displayed as read-only. No subscriptions managed here.
+
+**Revenue summary:** Link to `/revenue` for earnings overview and payout history.
+
+**Payout history:** Link to `/revenue/history` for on-chain payout records.
 
 **Upgrade flow:**
-- "Upgrade to Enterprise" → plan comparison table → contact form (name, email, message pre-filled). Enterprise upgrade is not self-serve (requires Privata sales confirmation). Form submission creates a Hubspot/CRM lead (P1).
+- "Contact us to upgrade" - directs to partners@privataswap.com. Enterprise upgrade is not self-serve; requires Privata sales confirmation.
 
-**Invoices:** Stripe Customer Portal embedded or redirect (iframe where CSP allows). Invoice list with date, amount, PDF download.
-
-**Empty state (new partner on rev-share):** "Your current plan: Revenue Share. No subscription invoice is generated. Earnings are reported in the Revenue section."
+**Empty state (new partner):** "Your current plan: Starter. Contact partners@privataswap.com to discuss plan options."
 
 ---
 
@@ -536,11 +526,11 @@ Roles are scoped per organization. A user may belong to multiple organizations w
 
 **Security:** TOTP and WebAuthn management (see §4.1), active sessions list (device, last_seen, IP, "Revoke" button per session), new-device email preference toggle.
 
-**Scoped tokens:** Personal access tokens for CI/CD automation. Separate from org API keys — dashboard-scoped only, not usable against `api.privataswap.com/partner/v1`. Scopes: `dashboard:read`, `dashboard:write`.
+**Scoped tokens:** Personal access tokens for CI/CD automation. Separate from org API keys - dashboard-scoped only, not usable against `api.privataswap.com/partner/v1`. Scopes: `dashboard:read`, `dashboard:write`.
 
 **Webhook IP allowlist:** Outbound webhook delivery IPs (published by Privata, currently static range). Partners can add these to their firewall allowlists. One-click copy of current Privata egress IPs.
 
-**GDPR:** "Export my data" button generates a ZIP of all org data (encrypted, emailed). "Delete organization" initiates a 30-day soft-delete grace period; final deletion logs to audit with certification ID.
+**GDPR:** Data export and deletion requests are handled manually via privacy@privataswap.com (see §5.10). No self-service UI in v1.
 
 ---
 
@@ -549,9 +539,9 @@ Roles are scoped per organization. A user may belong to multiple organizations w
 ### 5.1 Session Model
 
 - Sessions use **httpOnly, Secure, SameSite=Lax cookies** containing an opaque session token (32-byte random, stored in Redis with TTL).
-- **No JWTs in cookies.** JWTs are used for short-lived (15-minute) server-to-server tokens only (e.g., Stripe webhook validation).
+- JWTs are not used; sessions only.
 - Session TTL: 8 hours idle timeout, 30-day absolute maximum. Refresh on activity.
-- Session token is rotated on privilege escalation (2FA completion, role change). Old token immediately invalidated — prevents session fixation.
+- Session token is rotated on privilege escalation (2FA completion, role change). Old token immediately invalidated (prevents session fixation).
 - All session records stored in Redis with `session:{token_hash}` key. Value: `{user_id, org_id, role, device_id, created_at, last_seen_at, ip}`.
 
 ### 5.2 Authentication Methods
@@ -559,11 +549,9 @@ Roles are scoped per organization. A user may belong to multiple organizations w
 | Method | Implementation | Notes |
 |---|---|---|
 | Email + password | bcrypt (cost 12), HIBP k-anon check on signup | Argon2id considered for P1 |
-| Magic-link | 32-byte CSPRNG token, SHA-256 stored, 15-min TTL | Single-use; invalidated on consumption |
-| TOTP | RFC 6238, 30-second window, ±1 step tolerance | Secret encrypted with per-user DEK |
+| TOTP | RFC 6238, 30-second window, +/-1 step tolerance | Secret encrypted with per-user DEK |
 | WebAuthn / FIDO2 | `@simplewebauthn/server`, RP ID = `dashboard.privataswap.com` | Up to 5 credentials per user |
-| Enterprise SSO | WorkOS SAML/OIDC | Domain-verified; session issued same flow |
-| Backup codes | 10 × 8-char alphanumeric (zbase32), SHA-256 stored | Shown once, invalidated on use |
+| Backup codes | 10 x 8-char alphanumeric (zbase32), SHA-256 stored | Shown once, invalidated on use |
 
 ### 5.3 CSRF Protection
 
@@ -578,7 +566,6 @@ Roles are scoped per organization. A user may belong to multiple organizations w
 | Login attempts | 10 per IP | 15 minutes | IP-level 30-minute block |
 | Login attempts | 5 per email | 15 minutes | Account lock + email notification |
 | 2FA attempts | 5 per session | 30 minutes | Session invalidated, re-auth required |
-| Magic-link requests | 3 per email | 1 hour | Silent reject (no timing leak) |
 | API key create | 20 per org | 1 hour | 429 |
 | Webhook replay | 10 per endpoint | 1 hour | 429 |
 | Password reset requests | 3 per email | 1 hour | Silent |
@@ -596,11 +583,11 @@ Rate limits implemented in Redis using token bucket (per IP) and sliding window 
 
 ### 5.6 Secret Storage
 
-- **API key secrets:** Generated as 32-byte CSPRNG. Stored as `HMAC-SHA256(server_hmac_key, key)` — not bcrypt, to allow constant-time lookup. The `server_hmac_key` is a 256-bit key stored in AWS KMS (envelope encryption). The prefix (`pk_live_abc1...12`) is stored plaintext for UI display.
-- **Webhook secrets:** Stored encrypted using AES-256-GCM with a per-row IV. The DEK for each row is itself encrypted with AWS KMS CMK. Two secrets per endpoint during rotation (active + pending), each with its own encrypted record.
-- **TOTP secrets:** Encrypted with a per-user DEK derived from `HKDF(master_key, user_id)`. Master key in KMS.
+- **API key secrets:** Generated as 32-byte CSPRNG. Stored as `HMAC-SHA256(server_hmac_key, key)` for constant-time lookup. The `server_hmac_key` is a 256-bit key loaded from the deployment secret store (Doppler in current Privata infrastructure) into process memory at boot. The prefix (`pk_live_abc1...12`) is stored plaintext for UI display.
+- **Webhook secrets:** Stored encrypted using libsodium `crypto_secretbox_easy` (XSalsa20-Poly1305) with a per-row nonce; the master key is the same Doppler-managed 256-bit key. Two secrets per endpoint during rotation (active + pending), each with its own encrypted record.
+- **TOTP secrets:** Encrypted with a per-user DEK derived as `HKDF(master_key, user_id)`. All keys rotated annually via documented procedure.
 - **Payout addresses:** Stored plaintext (they are public-facing addresses by nature). However, the HMAC confirmation step for payouts means possession of a session alone is insufficient.
-- **Environment variable hygiene:** No secrets in application code or container images. All loaded at runtime from AWS Secrets Manager (production) or `.env.local` (development, never committed).
+- **Environment variable hygiene:** No secrets in application code or container images. All loaded at runtime from Doppler (production) or `.env.local` (development, never committed).
 
 ### 5.7 IDOR Prevention
 
@@ -617,15 +604,12 @@ Rate limits implemented in Redis using token bucket (per IP) and sliding window 
 
 ### 5.9 Audit Log Integrity
 
-- Each `audit_log` row contains: `id` (UUID), `created_at`, `actor_id`, `action`, `target`, `meta` (JSONB), `ip`, `session_id_suffix`, `prev_hash` (SHA-256 of the previous row's canonical representation), `row_hash` (SHA-256 of this row's content including `prev_hash`).
-- A background job (every 5 minutes) reads the current chain head and writes a signed checkpoint to `audit_log_checkpoints` table: `{chain_head_id, row_hash, signed_at, signature}`. Signature is `Ed25519(private_key, row_hash + signed_at)`. Private key stored in KMS.
-- Any row insertion between checkpoints that breaks the hash chain will be detected on the next verification run. Alerts to Sentry + PagerDuty.
-- Rows are append-only enforced at the Postgres role level: the application user (`dashboard_app`) has `INSERT` on `audit_log` but not `UPDATE` or `DELETE`. A separate `audit_readonly` role has `SELECT` only.
+The `audit_log` table is append-only. The Postgres role used by the dashboard backend (`dashboard_app`) is granted `INSERT, SELECT` and explicitly `REVOKE UPDATE, DELETE ON audit_log`. Schema migrations and operational fixes require a separate `dashboard_admin` role with elevated privileges, used only via break-glass procedure (logged out-of-band). Daily DB backups provide point-in-time recovery for tamper detection by comparison. Cryptographic row chaining and signed checkpoints are not implemented in v1; this is sufficient given the threat model (insider tampering by app-level compromise, not DB-admin compromise).
 
 ### 5.10 GDPR
 
-- **Data export:** Background job packages all org data (members, orders mirror, audit log, invoices) into a JSON ZIP. ZIP encrypted with the requesting user's email as symmetric password (AES-256, communicated via separate email). Download link valid 24h.
-- **Data deletion:** 30-day soft-delete grace. On hard delete: user PII (name, email) in `users` table replaced with `[deleted]`; org records soft-deleted; audit log rows retained (GDPR recital 65 — necessary for compliance/legal purposes, personal data minimized to `[deleted]` actor label).
+Data subject access requests (GDPR Art. 15) and erasure requests (Art. 17) are handled manually via privacy@privataswap.com. Response within 30 days as required. A self-service export/delete UI is not in scope for v1; volume is expected to be less than 1 request per month and a manual procedure is operationally adequate. Logged in `gdpr_requests` table for audit.
+
 - **Data residency:** All Postgres data in EU-West-1 (Ireland) by default. Enterprise partners can request dedicated EU or US clusters.
 
 ---
@@ -653,8 +637,7 @@ CREATE TABLE organizations (
   payout_threshold_usd NUMERIC(12,2) NOT NULL DEFAULT 500.00,
   created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
   deleted_at    TIMESTAMPTZ,
-  onboarding_completed_at TIMESTAMPTZ,
-  workos_org_id TEXT                               -- WorkOS SSO reference
+  onboarding_completed_at TIMESTAMPTZ
 );
 
 CREATE INDEX idx_organizations_slug ON organizations(slug);
@@ -665,7 +648,7 @@ CREATE TABLE users (
   id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   email           TEXT NOT NULL UNIQUE,
   email_verified  BOOLEAN NOT NULL DEFAULT FALSE,
-  password_hash   TEXT,                            -- NULL if SSO-only
+  password_hash   TEXT,                            -- NULL if password not set
   totp_secret_enc BYTEA,                           -- AES-256-GCM encrypted
   totp_enabled    BOOLEAN NOT NULL DEFAULT FALSE,
   webauthn_credentials JSONB NOT NULL DEFAULT '[]',
@@ -905,35 +888,31 @@ CREATE TABLE audit_log (
   meta        JSONB NOT NULL DEFAULT '{}',
   ip          INET,
   session_suffix TEXT,                             -- last 8 chars of session token
-  prev_hash   TEXT NOT NULL,                       -- SHA-256 of previous row
-  row_hash    TEXT NOT NULL,                       -- SHA-256(content + prev_hash)
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE INDEX idx_audit_org ON audit_log(org_id, created_at DESC);
 CREATE INDEX idx_audit_actor ON audit_log(actor_id, created_at DESC);
--- No UPDATE or DELETE on audit_log. Enforced at Postgres role level.
+-- No UPDATE or DELETE on audit_log. Enforced at Postgres role level (dashboard_app has INSERT, SELECT only).
 
-CREATE TABLE audit_log_checkpoints (
-  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  chain_head_id   UUID NOT NULL REFERENCES audit_log(id),
-  row_hash        TEXT NOT NULL,
-  signed_at       TIMESTAMPTZ NOT NULL,
-  signature       TEXT NOT NULL                    -- Ed25519 signature
+-- Partner plans
+CREATE TABLE partner_plans (
+  org_id               UUID PRIMARY KEY REFERENCES organizations(id),
+  tier                 TEXT NOT NULL CHECK (tier IN ('starter','pro','enterprise')) DEFAULT 'starter',
+  monthly_volume_cap_usd NUMERIC,
+  fee_bps              INT NOT NULL DEFAULT 50,
+  updated_at           TIMESTAMPTZ
 );
 
--- Billing subscriptions (mirrors Stripe)
-CREATE TABLE billing_subscriptions (
-  id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  org_id              UUID NOT NULL UNIQUE REFERENCES organizations(id),
-  stripe_customer_id  TEXT NOT NULL,
-  stripe_subscription_id TEXT,
-  plan                TEXT NOT NULL DEFAULT 'rev_share',
-  status              TEXT NOT NULL DEFAULT 'active',
-  current_period_start TIMESTAMPTZ,
-  current_period_end  TIMESTAMPTZ,
-  created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at          TIMESTAMPTZ NOT NULL DEFAULT now()
+-- GDPR requests
+CREATE TABLE gdpr_requests (
+  id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  org_id         UUID REFERENCES organizations(id),
+  user_email     TEXT,
+  request_type   TEXT CHECK (request_type IN ('export','delete')),
+  submitted_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+  completed_at   TIMESTAMPTZ,
+  notes          TEXT
 );
 
 -- Known user devices (for new-device detection)
@@ -962,8 +941,8 @@ All foreign keys are indexed. High-traffic queries use composite indexes. `order
 | `webhook_deliveries` | 90 days | Delete (not archived; low compliance value) |
 | `audit_log` | 2 years online | S3 Glacier; indefinite for legal compliance |
 | `sse_streams` | 24 hours (closed rows) | Delete |
-| `sla_incidents` | Indefinite online | — |
-| `payouts` | Indefinite online | — |
+| `sla_incidents` | Indefinite online | - |
+| `payouts` | Indefinite online | - |
 
 ---
 
@@ -976,13 +955,11 @@ All foreign keys are indexed. High-traffic queries use composite indexes. `order
 | ORM | Drizzle ORM | SQL-first, zero-runtime-overhead, native Postgres types, excellent migration story |
 | Database | Postgres 16 (RDS Multi-AZ) | ACID, range partitioning, `pg_trgm` for fuzzy order search, row-level security possible |
 | Cache / rate-limit | Redis (ElastiCache) | Token bucket rate limits, session store, realtime channel presence, Pub/Sub |
-| Auth identity | WorkOS | Handles enterprise SSO (SAML/OIDC), directory sync, MFA enforcement — faster than in-house SAML |
-| Payments | Stripe | Subscription management, invoicing, Customer Portal; widely understood by partners |
 | Email | Resend | Excellent deliverability, React Email templates, simple SDK, webhook for bounce tracking |
-| Realtime | Pusher Channels (see §9) | Managed WebSocket channels; simpler ops than self-hosted; adequate for projected scale |
-| Secret management | AWS KMS + Secrets Manager | Envelope encryption for API key hashes and webhook secrets; audit trail |
-| Error tracking | Sentry | Source-map support for Next.js, performance tracing, alert routing |
-| Product analytics | PostHog | Self-hostable option for privacy; session replay for UX debugging; feature flags |
+| Realtime | SSE (existing Privata SSE broker, see §9) | Reuses existing infrastructure; no third-party realtime vendor |
+| Secret management | Doppler + libsodium (libsodium for at-rest encryption; Doppler for environment secret distribution) | Key distribution without AWS dependency; libsodium XSalsa20-Poly1305 for webhook secrets |
+| Error tracking | Privata self-hosted error log endpoint (POST to /api/dashboard/_telemetry; structured logs to existing Privata Loki stack) | No third-party data egress |
+| Product analytics | None (privacy contradiction with our brand). Page view counts only, server-side, stored in `pageview_log` table; no client-side trackers, no session replay. | Privacy by design |
 | Infrastructure | AWS (ECS Fargate or Vercel) | Next.js on Vercel for frontend; tRPC API on Fargate for latency-sensitive paths |
 
 ---
@@ -997,8 +974,6 @@ auth
   auth.login                     email, password → session or 2fa_challenge
   auth.login.complete2fa         session_token, totp_code | webauthn_response → session
   auth.logout                    → void
-  auth.requestMagicLink [public] email → void
-  auth.verifyMagicLink [public]  token → session
   auth.requestPasswordReset      email → void
   auth.confirmPasswordReset      token, new_password → void
   auth.verifyEmail               otp → void
@@ -1009,10 +984,10 @@ auth
 
 onboarding
   onboarding.getState            → current step + data
-  onboarding.saveCompany         name, country, business_type, website → void
-  onboarding.saveVolume          order_volume_band, pairs, integration_layer → void
-  onboarding.saveJurisdictions   countries[], aml_checkbox → void
-  onboarding.saveTechnical       contact_name, email, telegram → void
+  onboarding.saveOrganization    name, business_email, jurisdiction → void
+  onboarding.saveVolume          volume_band → void
+  onboarding.saveUseCase         use_case_text → void
+  onboarding.acceptTerms         accepted → void
   onboarding.complete            → api_key (test, one-time)
 
 dashboard
@@ -1080,17 +1055,12 @@ team
   team.deactivateMember          member_id → void
   team.removeMember              member_id → void
   team.resendInvite              member_id → void
-  team.getSSOConfig              → workos config
-  team.configureSSOStart         → workos_redirect_url
-  team.configureSSOComplete      code → void
-
 audit_log
   audit_log.list                 filters, page → paginated [entry]
   audit_log.export               filters → job_id (async)
 
 billing
-  billing.getSubscription        → plan, status, usage
-  billing.getStripePortalUrl     → url (Stripe Customer Portal session)
+  billing.getSubscription        → plan tier, usage
   billing.requestUpgrade         message → void (creates CRM lead)
 
 settings
@@ -1111,41 +1081,33 @@ settings
 
 ## 9. Realtime Architecture
 
-### 9.1 Options Considered
+### 9.1 Infrastructure
 
-| Option | Pros | Cons |
-|---|---|---|
-| **Pusher Channels** | Managed; WebSocket + HTTP fallback; presence channels; simple SDK; generous free tier to start | Per-message pricing at scale; data leaves infra (Pusher servers in EU) |
-| **Centrifugo (self-hosted)** | Full control; low latency; Kafka consumer built-in; supports SSE + WebSocket | Ops overhead; another stateful service to manage; team must own availability |
-| **SSE proxy (forward /partner/v1 SSE)** | No new infrastructure; re-uses existing Privata SSE | Only covers order stream, not KPI updates; dashboard backend must proxy, multiplying load |
+Privata already operates a Server-Sent Events broker (`api.privataswap.com/sse`) used by the consumer swap UI for order status updates. The dashboard reuses this infrastructure: on login, the dashboard client opens an SSE connection to `/api/dashboard/sse` (dashboard backend), which authenticates the cookie session, looks up the user's `org_id`, and subscribes server-side to the internal NATS subjects `org.{org_id}.>` (orders, kpis, sla, webhooks). Events are forwarded to the client as named SSE events. Reconnect via `Last-Event-ID` header. No third-party realtime vendor. Capacity: a single SSE process handles ~10k concurrent connections; horizontal scaling via subject-based sharding on `org_id` modulo node count.
 
-**Decision: Pusher Channels (Standard plan, EU cluster).**
+### 9.2 Event Names
 
-Rationale: At the projected scale of tens to hundreds of concurrent dashboard users per partner organization, Pusher's per-connection pricing is negligible ($99/month for 500 concurrent connections). The ops complexity of self-hosting Centrifugo is not justified in P0-P1. The SSE proxy approach cannot cover KPI broadcasting without building a separate fan-out layer anyway. Pusher can be replaced with Centrifugo at scale without changing the client interface (both support identical channel/event subscribe semantics via the Pusher protocol).
-
-### 9.2 Channel Structure
+SSE event names used by the dashboard:
 
 ```
-private-org-{org_id}-kpis          → KPI updates (orders_today, volume, success_rate, etc.)
-private-org-{org_id}-orders        → New order events (append to order list in real time)
-private-org-{org_id}-webhooks      → Delivery status updates
-private-org-{org_id}-sla           → Incident open/close
-presence-org-{org_id}-team         → Active dashboard users (shows who is online in team view, P2)
+order.updated        - New or updated order event for this org
+kpi.tick             - KPI aggregate update (orders_today, volume, success_rate, etc.)
+sla.incident         - SLA incident open/close
+webhook.paused       - Webhook endpoint auto-paused
+sse.gauge            - SSE concurrency gauge update
 ```
-
-All channels are `private-` (authenticated by dashboard backend before subscription). Authentication: Pusher channel auth endpoint at `/api/pusher/auth`, which validates the session and confirms `org_id` membership before signing the channel.
 
 ### 9.3 Event Flow
 
 1. Privata's public API fires a webhook to the dashboard's internal receiver endpoint (`/internal/privata-webhook`).
 2. The receiver verifies HMAC, upserts the `orders` table, writes a `webhook_deliveries` row, updates `webhook_endpoints.failure_count`.
-3. Receiver publishes to Pusher: `private-org-{org_id}-orders` channel, event `order.updated`, payload is the order summary (not full raw API response — reduces payload size).
-4. KPI aggregates are recalculated as materialized values in Redis (`kpi:{org_id}:{date}` hash). Updated atomically on each order event. Pushed to `private-org-{org_id}-kpis` on change.
-5. Client subscribes to relevant channels on page load. tRPC fetches initial data (SSR or client); Pusher delivers incremental updates.
+3. Receiver publishes to NATS subject `org.{org_id}.orders`; the SSE broker forwards to connected dashboard clients as SSE event `order.updated`. Payload is the order summary (not full raw API response - reduces payload size).
+4. KPI aggregates are recalculated as materialized values in Redis (`kpi:{org_id}:{date}` hash). Updated atomically on each order event. Published to NATS subject `org.{org_id}.kpis`, forwarded as SSE event `kpi.tick`.
+5. Client opens SSE connection on page load. tRPC fetches initial data (SSR or client); SSE delivers incremental updates.
 
 ### 9.4 Concurrency Gauge
 
-The SSE concurrency gauge on the SSE page polls `sse_streams` table every 30 seconds (not realtime — concurrency count changes slowly). This avoids a hot Redis key for a low-priority metric.
+The SSE concurrency gauge on the SSE page polls `sse_streams` table every 30 seconds (not realtime - concurrency count changes slowly). This avoids a hot Redis key for a low-priority metric.
 
 ---
 
@@ -1153,7 +1115,7 @@ The SSE concurrency gauge on the SSE page polls `sse_streams` table every 30 sec
 
 ### 10.1 In-App Notifications
 
-Delivered via Pusher to the `private-org-{org_id}-*` channels and stored in a `notifications` table (not in data model above — P1 addition).
+Delivered via the same SSE connection as event `notification.created` and stored in a `notifications` table (not in data model above - P1 addition).
 
 | Trigger | In-app | Severity |
 |---|---|---|
@@ -1164,7 +1126,7 @@ Delivered via Pusher to the `private-org-{org_id}-*` channels and stored in a `n
 | API key expiry approaching (7 days, 1 day) | Banner on API Keys page | Warning |
 | Payout sent (tx_hash available) | Toast | Info |
 | New team member joined | Toast | Info |
-| New login from unknown device | Email only (too sensitive for in-app) | — |
+| New login from unknown device | Email only (too sensitive for in-app) | - |
 
 ### 10.2 Email Notifications
 
@@ -1200,20 +1162,19 @@ Mobile-first CSS (Tailwind breakpoints: base = mobile, `md` = tablet, `lg` = des
 ### 11.2 Priority Mobile Flows (P0)
 
 1. **Login + 2FA:** Full login flow including TOTP entry, WebAuthn prompt, and new-device confirmation. Tap targets ≥44px. Autofill compatible for password managers.
-2. **Order detail:** Summary card, event timeline, tx hashes with tap-to-copy. Refund action panel on scroll. No horizontal scroll — all content reflows.
+2. **Order detail:** Summary card, event timeline, tx hashes with tap-to-copy. Refund action panel on scroll. No horizontal scroll - all content reflows.
 3. **Webhook delivery view:** Delivery log readable on narrow screen; request/response bodies in collapsible panels. "Resume webhook" action accessible.
 
 ### 11.3 PWA Support
 
-- `manifest.webmanifest` with icon set, theme color `#7C5CFF`, `display: standalone`.
-- Service Worker (via `next-pwa`): cache shell + static assets. Do not cache API responses (security + freshness requirement).
-- **Push notifications** (P1): Web Push for SLA breach and webhook-paused events. Requires explicit opt-in from browser. On iOS 16.4+: available if added to home screen.
+Out of scope for v1. The dashboard is a server-rendered responsive web app; partners use it from desktop browsers in their operations console.
 
 ### 11.4 Out of Scope (v1)
 
 - Native iOS or Android applications.
 - Offline functionality beyond shell caching.
 - Tablet-optimized two-column layouts (deferred to P2 UX polish).
+- Progressive web app (PWA) installation, browser push notifications, mobile app.
 
 ---
 
@@ -1221,9 +1182,9 @@ Mobile-first CSS (Tailwind breakpoints: base = mobile, `md` = tablet, `lg` = des
 
 | Phase | Feature scope | Effort estimate | Notes |
 |---|---|---|---|
-| **P0 — MVP (launch blocker)** | Auth (email+password+TOTP+magic-link), Onboarding (KYB-lite), Home Dashboard (KPIs, no realtime), API Keys (CRUD, rotation, revoke), Webhooks (config, secret rotation, delivery log, pause/resume), Orders (search/filter, detail with timeline, refund action panel), SSE concurrency view (read-only), SLA page (uptime gauge, incidents), Team (invite, roles, remove), Audit log (view, export), Billing (plan display, Stripe Portal), Settings (org, security basics) | 14–18 dev-weeks (2 FE + 1 BE + 0.5 DevOps) | — |
-| **P1 — Full production readiness** | Realtime KPIs via Pusher, Revenue/Payouts (overview, history, payout address management, manual payout request + HMAC confirmation), Providers grid (toggle, refund matrix), WebAuthn enrollment, Enterprise SSO (WorkOS SAML), In-app notifications, Email notifications (all templates), Mobile PWA + push, Webhook events filter, Order CSV export (async), Audit log hash-chain verification, GDPR export/delete, PostHog analytics integration, Sentry error tracking | 10–14 dev-weeks | Requires P0 foundation |
-| **P2 — Scale + polish** | Scoped personal access tokens, SCIM directory sync, Per-provider fee config, Markup earnings breakdown, Dark/light theme, Tablet two-column layout, Centrifugo migration evaluation, Admin portal (internal Privata team), Trocador-compat monitoring, Internationalization (Russian UI toggle for pilot partners) | 8–12 dev-weeks | Non-blocking for revenue |
+| **P0 - MVP (launch blocker)** | Auth (email+password+TOTP), Onboarding (KYB-lite), Home Dashboard (KPIs, no realtime), API Keys (CRUD, rotation, revoke), Webhooks (config, secret rotation, delivery log, pause/resume), Orders (search/filter, detail with timeline, refund action panel), SSE concurrency view (read-only), SLA page (uptime gauge, incidents), Team (invite, roles, remove), Audit log (view, export), Billing (plan display), Settings (org, security basics) | 14-18 dev-weeks (2 FE + 1 BE + 0.5 DevOps) | - |
+| **P1 - Full production readiness** | Realtime KPIs via SSE, Revenue/Payouts (overview, history, payout address management, manual payout request + HMAC confirmation), Providers grid (toggle, refund matrix), WebAuthn enrollment, In-app notifications, Email notifications (all templates), Webhook events filter, Order CSV export (async), GDPR export/delete (manual process; log to gdpr_requests) | 10-14 dev-weeks | Requires P0 foundation |
+| **P2 - Scale + polish** | Scoped personal access tokens, Per-provider fee config, Markup earnings breakdown, Dark/light theme, Tablet two-column layout, Admin portal (internal Privata team), Trocador-compat monitoring, Internationalization (Russian UI toggle for pilot partners), GDPR self-service export/delete UI | 8-12 dev-weeks | Non-blocking for revenue |
 
 **Total: P0 + P1 = ~28 dev-weeks (approximately 7 months for a 2-person team; 4 months for a 4-person team).**
 
@@ -1231,25 +1192,19 @@ Mobile-first CSS (Tailwind breakpoints: base = mobile, `md` = tablet, `lg` = des
 
 ## 13. Open Questions / Risks
 
-1. **Privata public API ownership of order mirror:** The dashboard mirrors order data by consuming webhooks. If the partner's webhook endpoint (pointed at the dashboard's internal receiver) is paused or unreachable, the order mirror goes stale. Mitigation: dashboard should also poll `GET /me/orders` on a 5-minute schedule as a fallback sync. This creates a dependency on the public API's pagination — confirm rate-limit headroom with the API team.
+1. **Privata public API ownership of order mirror:** The dashboard mirrors order data by consuming webhooks. If the partner's webhook endpoint (pointed at the dashboard's internal receiver) is paused or unreachable, the order mirror goes stale. Mitigation: dashboard should also poll `GET /me/orders` on a 5-minute schedule as a fallback sync. This creates a dependency on the public API's pagination - confirm rate-limit headroom with the API team.
 
-2. **KMS region and latency:** Every webhook signature verification requires a KMS decrypt call to access the webhook secret. At high webhook volume, this could be a bottleneck. Mitigation: cache decrypted secrets in Redis with a short TTL (5 minutes, aligned with rotation grace window). Confirm that cached-plaintext-in-Redis meets the security bar, or consider DEK caching with memory-only storage.
+2. **HMAC payout confirmation UX:** Requiring partners to compute an HMAC manually is a high-friction step that may confuse Finance users who do not own the webhook secret. The email OTP fallback must be clearly presented. Risk: if the Finance role doesn't have access to the webhook secret (correct by design), the email OTP path is the only practical option for them - confirm this is acceptable or provide a dedicated "payout confirmation key" concept.
 
-3. **HMAC payout confirmation UX:** Requiring partners to compute an HMAC manually is a high-friction step that may confuse Finance users who do not own the webhook secret. The email OTP fallback must be clearly presented. Risk: if the Finance role doesn't have access to the webhook secret (correct by design), the email OTP path is the only practical option for them — confirm this is acceptable or provide a dedicated "payout confirmation key" concept.
+3. **Payout address verification micro-payment:** The verification scheme (sending 0.01 USDT to confirm address ownership) is a real blockchain transaction. Who pays the gas/network fee? What happens if the Tron/Ethereum network fee spike makes 0.01 USDT verification uneconomic? Consider: signature-based verification (partner signs a challenge with the private key for the address) as an alternative for P1.
 
-4. **Audit log chain integrity at high write volume:** Under burst conditions (e.g., 1000 orders/minute triggering 1000+ audit log writes), the hash-chain implementation using a previous-row pointer creates a write serialization bottleneck — each insert must read the previous row's hash. Mitigation: batch audit writes into micro-batches (50ms windows) and chain batches rather than individual rows. Confirm acceptable latency for audit trail.
+4. **Tenant isolation at scale:** Currently all organizations share a single Postgres instance with `org_id` row-level filtering. If a large partner has 10M orders, index scans on the shared `orders` table will be slow even with partitioning, and a misconfigured query could expose cross-org data. Mitigation: Postgres row-level security (RLS) as a defense-in-depth layer; evaluate per-enterprise-tier schema isolation at P2.
 
-5. **WorkOS pricing and lock-in:** WorkOS charges per enterprise SSO connection (approximately $125/connection/month). At scale with many enterprise partners, this becomes significant. Evaluate self-hosting Keycloak or using Auth.js with SAML at P2, with WorkOS as the initial accelerator.
+5. **Webhook delivery replay idempotency:** The dashboard's "replay" action re-sends an original payload with the current secret. If the partner's system is not idempotent on `event_id`, replaying a `order.completed` event could trigger duplicate payouts or notifications on their end. The API spec documents this requirement but enforcement is outside Privata's control. The UI should display a clear warning: "Replay will re-deliver the original event. Ensure your endpoint handles duplicate event_ids."
 
-6. **Payout address verification micro-payment:** The verification scheme (sending 0.01 USDT to confirm address ownership) is a real blockchain transaction. Who pays the gas/network fee? What happens if the Tron/Ethereum network fee spike makes 0.01 USDT verification uneconomic? Consider: signature-based verification (partner signs a challenge with the private key for the address) as an alternative for P1.
+6. **Geographic restriction on data:** Some enterprise partners may require that their order data and audit logs never leave a specific region (EU data residency). The current architecture places everything in one AWS region. Providing per-partner data residency is a significant architectural lift - call this out as a commercial blocker for regulated partners in the EU and UK.
 
-7. **Tenant isolation at scale:** Currently all organizations share a single Postgres instance with `org_id` row-level filtering. If a large partner has 10M orders, index scans on the shared `orders` table will be slow even with partitioning, and a misconfigured query could expose cross-org data. Mitigation: Postgres row-level security (RLS) as a defense-in-depth layer; evaluate per-enterprise-tier schema isolation at P2.
-
-8. **Webhook delivery replay idempotency:** The dashboard's "replay" action re-sends an original payload with the current secret. If the partner's system is not idempotent on `event_id`, replaying a `order.completed` event could trigger duplicate payouts or notifications on their end. The API spec documents this requirement but enforcement is outside Privata's control. The UI should display a clear warning: "Replay will re-deliver the original event. Ensure your endpoint handles duplicate event_ids."
-
-9. **Geographic restriction on data:** Some enterprise partners may require that their order data and audit logs never leave a specific region (EU data residency). The current architecture places everything in one AWS region. Providing per-partner data residency is a significant architectural lift — call this out as a commercial blocker for regulated partners in the EU and UK.
-
-10. **SSE proxy amplification:** If the dashboard's SSE page shows live streams, and many dashboard users open the same org's stream list simultaneously, the dashboard backend could open duplicate SSE connections to the public API. The `sse_streams` table is a cache of the public API's state — it must be populated by a single poller per org, not by each dashboard user independently.
+7. **SSE proxy amplification:** If the dashboard's SSE page shows live streams, and many dashboard users open the same org's stream list simultaneously, the dashboard backend could open duplicate SSE connections to the public API. The `sse_streams` table is a cache of the public API's state - it must be populated by a single poller per org, not by each dashboard user independently.
 
 ---
 
@@ -1261,13 +1216,13 @@ Mobile-first CSS (Tailwind breakpoints: base = mobile, `md` = tablet, `lg` = des
 
 1. **Empty state for new partner on Home Dashboard lacked a clear next action.** The original spec mentioned an "onboarding checklist widget" but did not specify which checklist items. Fix applied: §4.3 now specifies the checklist as incomplete onboarding steps, with a direct link to the Sandbox guide and a "Send your first test order" CTA.
 
-2. **No mention of the test key being issued during onboarding.** Partners need a test key before they can try any integration. Fix applied: §4.2 Onboarding step 5 now explicitly states "test key auto-issued and displayed (once)" on the Done screen.
+2. **No mention of the test key being issued during onboarding.** Partners need a test key before they can try any integration. Fix applied: §4.2 Onboarding Done screen now explicitly states "test key auto-issued and displayed (once)".
 
-3. **Finance role cannot access orders — a gap for revenue reconciliation.** Finance needs to correlate earnings with specific orders to reconcile revenue reports. Fix applied: §3 now grants Finance the `orders.search` and `orders.getDetail` read permissions (but not export or refund actions).
+3. **Finance role cannot access orders - a gap for revenue reconciliation.** Finance needs to correlate earnings with specific orders to reconcile revenue reports. Fix applied: §3 now grants Finance the `orders.search` and `orders.getDetail` read permissions (but not export or refund actions).
 
 4. **No documented path for a partner to self-diagnose a paused webhook.** Partners hitting the webhook-paused state need clear actionable UI. Fix applied: §4.5 now specifies the "Paused" badge, the "Resume" button behavior, and the error state when the active API key lacks `webhook:admin` scope.
 
-5. **Onboarding does not tell the partner what happens next (review process, go-live timeline).** Fix applied: §4.2 Done screen now includes "Confirmation; test key auto-issued" wording; the jurisdictions step explicitly describes the dead-end flow for non-compliant cases.
+5. **Onboarding does not tell the partner what happens next (review process, go-live timeline).** Fix applied: §4.2 Done screen now includes "Confirmation; test key auto-issued" wording.
 
 6. **Missing empty state for Providers page when API is down.** Fix applied: §4.8 now includes the fallback skeleton table state.
 
@@ -1281,10 +1236,9 @@ Mobile-first CSS (Tailwind breakpoints: base = mobile, `md` = tablet, `lg` = des
 
 **Spoofing:**
 - S1: *Session fixation.* An attacker who can inject a session cookie before login could inherit the authenticated session. Fix applied: §5.1 now explicitly states session token is rotated on privilege escalation (2FA completion) and on successful login, invalidating any pre-existing session.
-- S2: *Magic-link interception via email forwarding.* Fix: magic-link tokens are single-use (§5.2), 15-minute TTL, and the token is stored as SHA-256 hash server-side so even database compromise does not yield usable tokens.
 
 **Tampering:**
-- T1: *Audit log tampering.* An attacker with DB write access could modify past entries. Fix applied: §5.9 specifies the hash-chain + Ed25519 checkpoint scheme, and §6.1 specifies that the `dashboard_app` Postgres role lacks `UPDATE`/`DELETE` on `audit_log`.
+- T1: *Audit log tampering.* An attacker with DB write access could modify past entries. Fix applied: §5.9 specifies the DB role restriction (dashboard_app has INSERT, SELECT only on audit_log) and daily backup-based tamper detection, and §6.1 confirms the Postgres role enforcement.
 - T2: *Webhook replay attack.* Adversary captures a signed webhook and replays it. Fix applied: §5.8 documents the timestamp check (±300s) and the fact that the dashboard's replay action creates a new delivery with the current secret rather than re-using old signatures.
 - T3: *CSRF on state-changing actions.* Fix applied: §5.3 specifies double-submit cookie CSRF protection, enforced for all tRPC mutations.
 
@@ -1293,25 +1247,24 @@ Mobile-first CSS (Tailwind breakpoints: base = mobile, `md` = tablet, `lg` = des
 
 **Information Disclosure:**
 - I1: *IDOR on order IDs.* Fix applied: §5.7 specifies UUID v4 IDs, org-scoped queries, and the `withOrgScope()` helper that enforces org ownership at the tRPC layer.
-- I2: *IDOR on webhook delivery IDs.* Same mitigation as I1 — all delivery queries include `WHERE org_id = :current_org_id`.
+- I2: *IDOR on webhook delivery IDs.* Same mitigation as I1 - all delivery queries include `WHERE org_id = :current_org_id`.
 - I3: *API key secret exposure.* Fix applied: §5.6 specifies HMAC-SHA256 storage (not reversible), prefix stored plaintext for UI. Secret shown only once at creation in a modal that requires explicit acknowledgement.
 - I4: *Webhook secret exposure via delivery log.* The `X-Privata-Signature` header in delivery logs contains a derived value, not the secret itself. Fix: §4.5 delivery detail specifies signature is masked after first 8 chars in the UI.
 - I5: *Client IP disclosure via SSE stream list.* Fix applied: §4.6 specifies IPs are shown with last two octets masked.
-- I6: *User enumeration via login error messages.* Fix applied: §4.1 error states specify "Email or password incorrect" — no differentiation between non-existent email and wrong password.
+- I6: *User enumeration via login error messages.* Fix applied: §4.1 error states specify "Email or password incorrect" - no differentiation between non-existent email and wrong password.
 
 **Denial of Service:**
 - D1: *Webhook replay flood.* An attacker (or bug) triggers thousands of replay requests. Fix applied: §5.4 rate limit table now includes "Webhook replay: 10 per endpoint per hour."
 - D2: *Payout request flood.* Fix applied: §5.4 rate limit table includes "Payout requests: 2 per org per 24h."
-- D3: *Magic-link flood (to cause email spam).* Fix applied: §5.4 includes "Magic-link requests: 3 per email per hour, silent reject."
 
 **Elevation of Privilege:**
-- E1: *Billing fraud — upgrading plan without payment.* Billing upgrade is not self-serve (requires Privata sales confirmation, §4.13). Stripe webhook validates all payment state changes server-side.
-- E2: *Finance role accessing API keys or triggering refunds.* Fixed in §3 — Finance role explicitly excluded from API key, refund, and webhook actions. Enforced at tRPC middleware layer by checking `ctx.session.role` against an allowlist per procedure.
+- E1: *Plan upgrade without authorization.* Billing upgrade is not self-serve (requires Privata sales confirmation, §4.13); no payment processor involved at the dashboard level.
+- E2: *Finance role accessing API keys or triggering refunds.* Fixed in §3 - Finance role explicitly excluded from API key, refund, and webhook actions. Enforced at tRPC middleware layer by checking `ctx.session.role` against an allowlist per procedure.
 - E3: *Developer creating `payouts:trigger` scoped key on a test key.* Fix applied: §4.4 blocks `payouts:trigger` scope on test-environment keys with an inline error.
 
 **Additional mitigations not previously specified:**
 - SSRF in webhook URL registration: §4.5 now explicitly lists blocked ranges (private RFC-1918, 169.254.169.254, metadata.google.internal, link-local) per the webhooks guide documentation.
-- DNS rebinding protection for webhook endpoints: noted in §4.5 ("DNS rebinding protection: resolve and pin IP for 5 min on first delivery" — sourced from the webhooks guide).
+- DNS rebinding protection for webhook endpoints: noted in §4.5 ("DNS rebinding protection: resolve and pin IP for 5 min on first delivery" - sourced from the webhooks guide).
 
 **all_findings_resolved: true**
 
@@ -1326,12 +1279,11 @@ Mobile-first CSS (Tailwind breakpoints: base = mobile, `md` = tablet, `lg` = des
 - B2: *`webhook_deliveries.next_retry_at` index for retry poller.* A cron job that polls for due retries needs an efficient index. Fix applied: `idx_deliveries_retry` index added on `(next_retry_at) WHERE status = 'pending'`.
 - B3: *N+1 risk on order list.* `orders.search` could issue a separate query per order to fetch delivery counts. Fix: the `orders.search` RPC must use a `LEFT JOIN LATERAL` or a `COUNT` subquery to return delivery counts in a single query. Document this in the RPC spec. Applied: added this note to the `orders.search` RPC entry.
 - B4: *`sse_streams` table staleness.* Pod restarts leave rows without `closed_at`, inflating the concurrency count. Fix applied: §6.1 now includes `pod_id` column and a note that a pod-shutdown hook must mark all rows for that `pod_id` as closed. A fallback: rows without `closed_at` older than 2 × the SSE keepalive interval (e.g., 90 seconds) are treated as stale.
-- B5: *`audit_log` hash chain write serialization.* Noted as open question §13.4. Fix applied: §5.9 now specifies micro-batch strategy (50ms windows) as the implementation approach.
-- B6: *`api_keys.key_hash` lookup on every public API request.* This is not the dashboard's concern — the public API owns its own auth layer. Confirmed: the dashboard's `api_keys` table is for display/management only; the public API has its own key store. No change needed, but callout added to §8 to clarify the separation.
-- B7: *Missing `orders.amount_in_usd` derivation.* The original API spec returns amounts in native asset, not USD. The dashboard KPIs need USD values. Fix applied: §6.1 adds `amount_in_usd NUMERIC(18,2)` to the `orders` table, populated at ingest time by calling a price oracle (CoinGecko or internal pricing service). This is a non-trivial dependency — noted in §13 open question 1.
+- B5: *`audit_log` write integrity.* Addressed by DB role restriction (§5.9) - dashboard_app has INSERT, SELECT only; daily backups provide tamper detection baseline.
+- B6: *`api_keys.key_hash` lookup on every public API request.* This is not the dashboard's concern - the public API owns its own auth layer. Confirmed: the dashboard's `api_keys` table is for display/management only; the public API has its own key store. No change needed, but callout added to §8 to clarify the separation.
+- B7: *Missing `orders.amount_in_usd` derivation.* The original API spec returns amounts in native asset, not USD. The dashboard KPIs need USD values. Fix applied: §6.1 adds `amount_in_usd NUMERIC(18,2)` to the `orders` table, populated at ingest time by calling a price oracle (CoinGecko or internal pricing service). This is a non-trivial dependency - noted in §13 open question 1.
 - B8: *Redis hotkey risk for KPI aggregates.* `kpi:{org_id}:{date}` is a single Redis hash key that gets written on every order event. For high-volume partners (>100 orders/minute), this is a write hotspot. Fix: use Redis pipeline + HINCRBY for atomic increments (not a read-modify-write cycle). For extremely high volumes (>1000/min, Enterprise tier), consider a local in-memory counter per dashboard pod that flushes to Redis every 5 seconds.
 - B9: *Migration path.* No migration tooling specified. Fix applied: Drizzle ORM provides `drizzle-kit` for migration generation. All schema changes must produce a timestamped migration file in `./drizzle/migrations`. Zero-downtime migrations use `ADD COLUMN ... DEFAULT ...` (backfilled in background) and avoid `ALTER COLUMN NOT NULL` without a default.
-- B10: *Scalability of Pusher at scale.* Pusher Standard plan supports 500 concurrent connections. At 100+ enterprise partners each with 5+ dashboard users, this is reachable. Fix: Pusher Business plan (10K concurrent) or evaluate Centrifugo at P2. Noted in §9 and §12.
 
 **all_findings_resolved: true**
 
@@ -1343,4 +1295,4 @@ All issues raised by the Senior PM, Staff Security Engineer, and Staff Backend E
 
 ---
 
-*End of Privata Partner Dashboard — Product + Technical Specification v1.0*
+*End of Privata Partner Dashboard - Product + Technical Specification v1.0*
