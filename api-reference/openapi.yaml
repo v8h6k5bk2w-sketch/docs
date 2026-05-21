@@ -5,7 +5,7 @@ info:
   summary: REST API for integrating Privata swap aggregator into crypto wallets.
   description: |
     Privata is a non-custodial swap aggregator. Wallets call this API to fetch
-    quotes from 28 providers, create exchange orders with deposit addresses,
+    quotes from 50+ providers, create exchange orders with deposit addresses,
     and track order lifecycle via webhooks or Server-Sent Events.
 
     Wire format is snake_case. The official JS/TS SDK (`@privata/wallet-api`)

@@ -2,7 +2,7 @@
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
   "name": "Privata",
-  "description": "API and SDK for integrating Privata swap aggregator into crypto wallets. 28 providers, single REST surface, privacy by design.",
+  "description": "API and SDK for integrating Privata swap aggregator into crypto wallets. 50+ providers, single REST surface, privacy by design.",
   "colors": {
     "primary": "#7C5CFF",
     "light": "#A491FF",

@@ -27,7 +27,7 @@ trace in &lt;10 s.
 | `INVALID_PAIR` | 400 | Pair not supported across any provider. | Show generic "Pair unavailable" UX. |
 | `AMOUNT_TOO_LOW` | 400 | Below provider minimum. | Show min from `/limits`. |
 | `AMOUNT_TOO_HIGH` | 400 | Above provider maximum. | Show max from `/limits`. |
-| `NO_PROVIDERS_AVAILABLE` | 503 | All 28 providers down or filtered out by your geo policy. | Retry in 30 s. |
+| `NO_PROVIDERS_AVAILABLE` | 503 | All 50+ providers down or filtered out by your geo policy. | Retry in 30 s. |
 | `PROVIDER_ERROR` | 502 | Selected provider returned a transient error. | Re-quote, we'll route to a fallback. |
 | `QUOTE_EXPIRED` | 410 | `quote_id` no longer valid (5 min TTL). | Get a fresh `/estimate` and retry. |
 | `ORDER_NOT_FOUND` | 404 | Wrong `order_id` or order older than our retention. | Check spelling; orders retained 18 months. |

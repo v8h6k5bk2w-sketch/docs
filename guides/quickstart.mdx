@@ -37,7 +37,7 @@ import { Privata } from "@privata/wallet-api";
 
 const privata = new Privata({ apiKey: process.env.PRIVATA_API_KEY! });
 
-// 1. Get the best quote across 28 providers.
+// 1. Get the best quote across 50+ providers.
 const quote = await privata.estimate({
   from: "BTC",
   to: "XMR",
